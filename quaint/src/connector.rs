@@ -24,7 +24,7 @@ mod type_identifier;
 pub use self::result_set::*;
 pub use connection_info::*;
 
-#[cfg(feature = "native")]
+#[cfg(not(target_arch = "wasm32"))]
 pub use native::*;
 
 pub use external::*;
