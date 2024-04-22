@@ -36,7 +36,6 @@ impl OrderBy {
             OrderBy::Scalar(o) => Some(&o.path),
             OrderBy::ToManyAggregation(o) => Some(&o.path),
             OrderBy::ScalarAggregation(_) => None,
-            #[cfg(any(feature = "postgresql", feature = "mysql"))]
             OrderBy::Relevance(_) => None,
         }
     }
@@ -46,7 +45,6 @@ impl OrderBy {
             OrderBy::Scalar(o) => o.sort_order,
             OrderBy::ScalarAggregation(o) => o.sort_order,
             OrderBy::ToManyAggregation(o) => o.sort_order,
-            #[cfg(any(feature = "postgresql", feature = "mysql"))]
             OrderBy::Relevance(o) => o.sort_order,
         }
     }
@@ -56,7 +54,6 @@ impl OrderBy {
             OrderBy::Scalar(o) => Some(o.field.clone()),
             OrderBy::ScalarAggregation(o) => Some(o.field.clone()),
             OrderBy::ToManyAggregation(_) => None,
-            #[cfg(any(feature = "postgresql", feature = "mysql"))]
             OrderBy::Relevance(_) => None,
         }
     }
