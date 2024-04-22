@@ -303,10 +303,15 @@ impl FromStr for Flavour {
     type Err = String;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
+            #[cfg(feature = "msyql")]
             "mysql" => Ok(Self::Mysql),
+            #[cfg(feature = "postgresql")]
             "postgres" => Ok(Self::Postgres),
+            #[cfg(feature = "cockroach")]
             "cockroachdb" => Ok(Self::Cockroach),
+            #[cfg(feature = "mssql")]
             "mssql" => Ok(Self::Sqlserver),
+            #[cfg(feature = "sqlite")]
             "sqlite" => Ok(Self::Sqlite),
             _ => Err(format!("Unknown flavour: {}", s)),
         }
