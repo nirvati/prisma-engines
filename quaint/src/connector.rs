@@ -13,7 +13,6 @@ mod connection_info;
 
 pub mod external;
 pub mod metrics;
-#[cfg(feature = "native")]
 pub mod native;
 mod queryable;
 mod result_set;
