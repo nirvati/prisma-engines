@@ -269,6 +269,7 @@ impl ConnectionInfo {
         match self {
             #[cfg(not(target_arch = "wasm32"))]
             ConnectionInfo::Native(nt) => match nt {
+                #[cfg(feature = "mysql")]
                 NativeConnectionInfo::Mysql(m) => m.version(),
                 _ => None,
             },
