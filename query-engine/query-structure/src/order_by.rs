@@ -27,7 +27,6 @@ pub enum OrderBy {
     Scalar(OrderByScalar),
     ScalarAggregation(OrderByScalarAggregation),
     ToManyAggregation(OrderByToManyAggregation),
-    #[cfg(any(feature = "postgresql", feature = "mysql"))]
     Relevance(OrderByRelevance),
 }
 
@@ -201,7 +200,6 @@ impl OrderByToManyAggregation {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-#[cfg(any(feature = "postgresql", feature = "mysql"))]
 pub struct OrderByRelevance {
     pub fields: Vec<ScalarFieldRef>,
     pub sort_order: SortOrder,
