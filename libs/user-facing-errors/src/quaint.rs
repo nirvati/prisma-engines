@@ -260,6 +260,7 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
                     database_port: url.port(),
                 }))
             }
+            #[cfg(feature = "mssql")]
             (NativeErrorKind::ConnectTimeout, ConnectionInfo::Native(NativeConnectionInfo::Mssql(url))) => {
                 Some(KnownError::new(common::DatabaseNotReachable {
                     database_host: url.host().to_owned(),
