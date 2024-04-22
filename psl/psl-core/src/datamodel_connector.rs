@@ -285,7 +285,7 @@ pub trait Connector: Send + Sync {
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Flavour {
-    #[cfg(feature = "cockroach")]
+    #[cfg(feature = "cockroachdb")]
     Cockroach,
     #[cfg(feature = "mongodb")]
     Mongo,
@@ -307,7 +307,7 @@ impl FromStr for Flavour {
             "mysql" => Ok(Self::Mysql),
             #[cfg(feature = "postgresql")]
             "postgres" => Ok(Self::Postgres),
-            #[cfg(feature = "cockroach")]
+            #[cfg(feature = "cockroachdb")]
             "cockroachdb" => Ok(Self::Cockroach),
             #[cfg(feature = "mssql")]
             "mssql" => Ok(Self::Sqlserver),

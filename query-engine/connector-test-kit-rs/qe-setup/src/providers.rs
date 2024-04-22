@@ -20,7 +20,7 @@ pub(crate) enum Provider {
     #[serde(rename = "mongo")]
     Mongo,
 
-    #[serde(rename = "cockroach")]
+    #[serde(rename = "cockroachdb")]
     Cockroach,
 }
 
