@@ -5,10 +5,10 @@ version = "0.1.0"
 
 [features]
 vendored-openssl = ["quaint/vendored-openssl"]
-mssql = ["schema-connector/mssql", "sql-schema-describer/mssql", "sql-ddl/mssql"]
-mysql = ["schema-connector/mysql", "sql-schema-describer/mysql", "sql-ddl/mysql"]
-postgresql = ["schema-connector/postgresql", "sql-schema-describer/postgresql", "sql-ddl/postgres"]
-sqlite = ["schema-connector/sqlite", "sql-schema-describer/sqlite", "sql-ddl/sqlite"]
+mssql = ["schema-connector/mssql", "sql-schema-describer/mssql", "sql-ddl/mssql", "user-facing-errors/mssql"]
+mysql = ["schema-connector/mysql", "sql-schema-describer/mysql", "sql-ddl/mysql", "user-facing-errors/mysql"]
+postgresql = ["schema-connector/postgresql", "sql-schema-describer/postgresql", "sql-ddl/postgres", "user-facing-errors/postgresql"]
+sqlite = ["schema-connector/sqlite", "sql-schema-describer/sqlite", "sql-ddl/sqlite", "user-facing-errors/sqlite"]
 
 [dependencies]
 psl.workspace = true
@@ -28,9 +28,7 @@ schema-connector = { path = "../schema-connector" }
 sql-schema-describer = { path = "../../sql-schema-describer" }
 datamodel-renderer = { path = "../../datamodel-renderer" }
 sql-ddl = { path = "../../../libs/sql-ddl" }
-user-facing-errors = { path = "../../../libs/user-facing-errors", features = [
-    "sql",
-] }
+user-facing-errors = { path = "../../../libs/user-facing-errors" }
 
 chrono.workspace = true
 connection-string.workspace = true
