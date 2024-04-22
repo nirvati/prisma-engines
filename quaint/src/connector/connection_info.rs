@@ -365,7 +365,6 @@ impl SqlFamily {
             SqlFamily::Sqlite => 999,
             #[cfg(feature = "mssql")]
             SqlFamily::Mssql => 2099,
-            _ => unreachable!(),
         }
     }
 
