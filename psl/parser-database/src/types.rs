@@ -1462,6 +1462,7 @@ impl ScalarType {
         matches!(self, ScalarType::Bytes)
     }
 
+    #[allow(missing_docs)]
     pub fn try_from_str(s: &str, ignore_case: bool) -> Option<ScalarType> {
         match ignore_case {
             true => match s.to_lowercase().as_str() {
