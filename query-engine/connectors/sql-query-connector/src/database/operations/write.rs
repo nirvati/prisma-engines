@@ -103,9 +103,13 @@ pub(crate) async fn create_record(
     let returned_id = if sql_family.is_mysql() {
         generate_id(conn, &id_field, &args, ctx)
             .await?
-            .or_else(|| args.as_selection_result(ModelProjection::from(id_field))),
-        _ => args.as_selection_result(ModelProjection::from(id_field)),
+            .or_else(|| args.as_selection_result(ModelProjection::from(id_field)))
+    } else {
+        args.as_selection_result(ModelProjection::from(id_field))
     };
+    
+    #[cfg(not(feature = "mysql"))]
+    let returned_id = args.as_selection_result(ModelProjection::from(id_field));
 
     #[cfg(feature = "mysql")]
     let args = match returned_id {

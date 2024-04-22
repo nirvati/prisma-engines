@@ -51,6 +51,8 @@ impl OrderByBuilder {
                     reachable_only_with_capability!(ConnectorCapability::FullTextSearch);
                     self.build_order_relevance(order_by, needs_reversed_order, ctx)
                 }
+                #[cfg(not(any(feature = "postgresql", feature = "mysql")))]
+                _ => unreachable!("Feature not enabled that should be enabled!"),
             })
             .collect_vec()
     }

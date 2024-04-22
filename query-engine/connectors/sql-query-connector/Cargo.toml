@@ -31,7 +31,7 @@ rand.workspace = true
 serde_json.workspace = true
 thiserror = "1.0"
 tokio = { version = "1.0", features = ["macros", "time"] }
-tracing.workspace = true
+tracing = { workspace = true, features = ["log"] }
 tracing-futures = "0.2"
 uuid.workspace = true
 opentelemetry = { version = "0.17", features = ["tokio"] }

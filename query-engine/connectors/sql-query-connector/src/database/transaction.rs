@@ -286,11 +286,11 @@ impl<'tx> WriteOperations for SqlConnectorTransaction<'tx> {
         trace_id: Option<String>,
     ) -> connector::Result<SingleRecord> {
         #[cfg(any(feature = "postgresql", feature = "mssql", feature = "sqlite"))]
-        catch(&self.connection_info, async {
+        return catch(&self.connection_info, async {
             let ctx = Context::new(&self.connection_info, trace_id.as_deref());
             upsert::native_upsert(self.inner.as_queryable(), upsert, &ctx).await
         })
-        .await
+        .await;
         #[cfg(not(any(feature = "postgresql", feature = "mssql", feature = "sqlite")))]
         unreachable!()
     }

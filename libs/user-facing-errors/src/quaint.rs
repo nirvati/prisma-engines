@@ -1,4 +1,7 @@
+#![allow(unused_variables)]
+
 use crate::{common, query_engine, KnownError};
+#[allow(unused_imports)]
 use indoc::formatdoc;
 use quaint::{error::ErrorKind, prelude::ConnectionInfo};
 

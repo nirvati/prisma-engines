@@ -259,11 +259,11 @@ where
     ) -> connector::Result<usize> {
         let ctx = Context::new(&self.connection_info, trace_id.as_deref());
         #[cfg(any(feature = "postgresql", feature = "mssql", feature = "sqlite"))]
-        catch(
+        return catch(
             &self.connection_info,
             write::delete_records(&self.inner, model, record_filter, &ctx),
         )
-        .await
+        .await;
         #[cfg(not(any(feature = "postgresql", feature = "mssql", feature = "sqlite")))]
         unreachable!()
     }
@@ -277,11 +277,11 @@ where
     ) -> connector::Result<SingleRecord> {
         let ctx = Context::new(&self.connection_info, trace_id.as_deref());
         #[cfg(any(feature = "postgresql", feature = "mssql", feature = "sqlite"))]
-        catch(
+        return catch(
             &self.connection_info,
             write::delete_record(&self.inner, model, record_filter, selected_fields, &ctx),
         )
-        .await
+        .await;
         #[cfg(not(any(feature = "postgresql", feature = "mssql", feature = "sqlite")))]
         unreachable!()
     }
