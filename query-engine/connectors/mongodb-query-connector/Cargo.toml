@@ -49,7 +49,6 @@ workspace = true
 workspace = true
 
 [dependencies.user-facing-errors]
-features = ["sql"]
 workspace = true
 
 [dev-dependencies]

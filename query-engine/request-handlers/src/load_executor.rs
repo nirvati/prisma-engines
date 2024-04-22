@@ -3,7 +3,6 @@
 use psl::{builtin_connectors::*, Datasource, PreviewFeatures};
 use quaint::connector::ExternalConnector;
 use query_core::{executor::InterpretingExecutor, Connector, QueryExecutor};
-use sql_query_connector::*;
 use std::collections::HashMap;
 use std::env;
 use std::marker::PhantomData;

@@ -3,7 +3,7 @@ use psl::{
     parser_database::{self as db, walkers},
     schema_ast::ast::WithDocumentation,
 };
-use sql::postgres::PostgresSchemaExt;
+use sql::TableId;
 use sql_schema_describer as sql;
 use std::borrow::Cow;
 
@@ -74,19 +74,20 @@ impl<'a> ModelPair<'a> {
     }
 
     pub(crate) fn expression_indexes(self) -> impl Iterator<Item = &'a str> {
-        let mut indexes = None;
-        if self.context.sql_family().is_postgres() {
-            let data: &PostgresSchemaExt = self.context.sql_schema.downcast_connector_data();
+        let mut indexes: Option<&Vec<(TableId, String)>> = None;
 
-            indexes = Some(
-                data.expression_indexes
-                    .iter()
-                    .filter(move |(table_id, _idx)| *table_id == self.next.id)
-                    .map(|(_table_id, idx)| idx.as_str()),
-            );
+        #[cfg(feature = "postgresql")]
+        if self.context.sql_family().is_postgres() {
+            let data: &sql::postgres::PostgresSchemaExt = self.context.sql_schema.downcast_connector_data();
+
+            indexes = Some(&data.expression_indexes);
         }
 
-        indexes.into_iter().flatten()
+        indexes
+            .into_iter()
+            .flatten()
+            .filter(move |(table_id, _idx)| *table_id == self.next.id)
+            .map(|(_table_id, idx)| idx.as_str())
     }
 
     /// True, if we add a new model with row level security enabled.

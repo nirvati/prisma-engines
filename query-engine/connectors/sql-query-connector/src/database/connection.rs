@@ -258,11 +258,14 @@ where
         trace_id: Option<String>,
     ) -> connector::Result<usize> {
         let ctx = Context::new(&self.connection_info, trace_id.as_deref());
+        #[cfg(any(feature = "postgresql", feature = "mssql", feature = "sqlite"))]
         catch(
             &self.connection_info,
             write::delete_records(&self.inner, model, record_filter, &ctx),
         )
         .await
+        #[cfg(not(any(feature = "postgresql", feature = "mssql", feature = "sqlite")))]
+        unreachable!()
     }
 
     async fn delete_record(
@@ -273,11 +276,14 @@ where
         trace_id: Option<String>,
     ) -> connector::Result<SingleRecord> {
         let ctx = Context::new(&self.connection_info, trace_id.as_deref());
+        #[cfg(any(feature = "postgresql", feature = "mssql", feature = "sqlite"))]
         catch(
             &self.connection_info,
             write::delete_record(&self.inner, model, record_filter, selected_fields, &ctx),
         )
         .await
+        #[cfg(not(any(feature = "postgresql", feature = "mssql", feature = "sqlite")))]
+        unreachable!()
     }
 
     async fn native_upsert_record(

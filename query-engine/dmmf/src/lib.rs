@@ -4,8 +4,7 @@ mod serialization_ast;
 #[cfg(test)]
 mod tests;
 
-use psl::ValidatedSchema;
-pub use serialization_ast::DataModelMetaFormat;
+pub use serialization_ast::*;
 
 use ast_builders::schema_to_dmmf;
 use schema::QuerySchema;

@@ -1462,7 +1462,7 @@ impl ScalarType {
         matches!(self, ScalarType::Bytes)
     }
 
-    pub(crate) fn try_from_str(s: &str, ignore_case: bool) -> Option<ScalarType> {
+    pub fn try_from_str(s: &str, ignore_case: bool) -> Option<ScalarType> {
         match ignore_case {
             true => match s.to_lowercase().as_str() {
                 "int" => Some(ScalarType::Int),
