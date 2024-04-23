@@ -169,6 +169,7 @@ fn connector_for_provider(provider: &str) -> CoreResult<Box<dyn schema_connector
             Flavour::Postgres => Ok(Box::new(SqlSchemaConnector::new_postgres())),
             #[cfg(feature = "sqlite")]
             Flavour::Sqlite => Ok(Box::new(SqlSchemaConnector::new_sqlite())),
+            _ => unreachable!("The feature for this connector is not enabled."),
         }
     } else {
         Err(CoreError::from_msg(format!(
