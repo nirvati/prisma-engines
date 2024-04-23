@@ -285,17 +285,11 @@ pub trait Connector: Send + Sync {
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Flavour {
-    #[cfg(feature = "cockroachdb")]
     Cockroach,
-    #[cfg(feature = "mongodb")]
     Mongo,
-    #[cfg(feature = "mssql")]
     Sqlserver,
-    #[cfg(feature = "msyql")]
     Mysql,
-    #[cfg(feature = "postgresql")]
     Postgres,
-    #[cfg(feature = "sqlite")]
     Sqlite,
 }
 

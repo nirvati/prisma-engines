@@ -55,6 +55,7 @@ fn set_config_dir_default<'a>(config_dir: &std::path::Path, url: &'a str) -> Cow
     url.to_string().into()
 }
 
+#[cfg(feature = "mssql")]
 pub fn set_config_dir_mssql<'a>(config_dir: &std::path::Path, url: &'a str) -> Cow<'a, str> {
     let mut jdbc: JdbcString = match format!("jdbc:{url}").parse() {
         Ok(jdbc) => jdbc,
@@ -84,6 +85,7 @@ pub fn set_config_dir_mssql<'a>(config_dir: &std::path::Path, url: &'a str) -> C
     Cow::Owned(final_connection_string)
 }
 
+#[cfg(feature = "sqlite")]
 pub fn set_config_dir_sqlite<'a>(config_dir: &std::path::Path, url: &'a str) -> Cow<'a, str> {
     let set_root = |path: &str| {
         let path = std::path::Path::new(path);
