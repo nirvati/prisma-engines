@@ -7,10 +7,10 @@ edition = "2021"
 psl = { workspace = true, features = ["all"] }
 schema-core = { path = "../core" }
 sql-schema-connector = { path = "../connectors/sql-schema-connector", features = [
-	"mssql",
-	"mysql",
-	"postgresql",
-	"sqlite"
+	"mssql-native",
+	"mysql-native",
+	"postgresql-native",
+	"sqlite-native"
 ] }
 sql-schema-describer = { path = "../sql-schema-describer" }
 user-facing-errors = { path = "../../libs/user-facing-errors", features = [

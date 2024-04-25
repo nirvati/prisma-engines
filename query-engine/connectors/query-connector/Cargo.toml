@@ -19,7 +19,7 @@ uuid.workspace = true
 indexmap.workspace = true
 
 [features]
-sqlite = ["user-facing-errors/sqlite"]
-mysql = ["user-facing-errors/mysql"]
-postgresql = ["user-facing-errors/postgresql"]
-mssql = ["user-facing-errors/mssql"]
+sqlite = ["user-facing-errors/sqlite-native"]
+mysql = ["user-facing-errors/mysql-native"]
+postgresql = ["user-facing-errors/postgresql-native"]
+mssql = ["user-facing-errors/mssql-native"]

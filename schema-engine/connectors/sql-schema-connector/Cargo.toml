@@ -5,15 +5,14 @@ version = "0.1.0"
 
 [features]
 vendored-openssl = ["quaint/vendored-openssl"]
-mssql = ["schema-connector/mssql", "sql-schema-describer/mssql", "sql-ddl/mssql", "user-facing-errors/mssql"]
-mysql = ["schema-connector/mysql", "sql-schema-describer/mysql", "sql-ddl/mysql", "user-facing-errors/mysql"]
-postgresql = ["schema-connector/postgresql", "sql-schema-describer/postgresql", "sql-ddl/postgres", "user-facing-errors/postgresql"]
-sqlite = ["schema-connector/sqlite", "sql-schema-describer/sqlite", "sql-ddl/sqlite", "user-facing-errors/sqlite"]
+mssql-native = ["schema-connector/mssql", "sql-schema-describer/mssql", "sql-ddl/mssql", "user-facing-errors/mssql-native"]
+mysql-native = ["schema-connector/mysql", "sql-schema-describer/mysql", "sql-ddl/mysql", "user-facing-errors/mysql-native"]
+postgresql-native = ["schema-connector/postgresql", "sql-schema-describer/postgresql", "sql-ddl/postgres", "user-facing-errors/postgresql-native"]
+sqlite-native = ["schema-connector/sqlite", "sql-schema-describer/sqlite", "sql-ddl/sqlite", "user-facing-errors/sqlite-native"]
 
 [dependencies]
 psl.workspace = true
 quaint = { workspace = true, features = [
-    "all-native",
     "expose-drivers",
     "pooled",
     "fmt-sql",
