@@ -13,7 +13,7 @@ sqlite = ["schema-connector/sqlite", "sql-schema-describer/sqlite", "sql-ddl/sql
 [dependencies]
 psl.workspace = true
 quaint = { workspace = true, features = [
-    "native",
+    "all-native",
     "expose-drivers",
     "pooled",
     "fmt-sql",

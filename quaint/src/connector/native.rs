@@ -32,6 +32,7 @@ pub enum NativeConnectionInfo {
 
 #[cfg(not(target_arch = "wasm32"))]
 impl NativeConnectionInfo {
+    #[allow(unused)]
     pub fn set_version(&mut self, version: Option<String>) {
         #[cfg(feature = "mysql")]
         if let NativeConnectionInfo::Mysql(c) = self {

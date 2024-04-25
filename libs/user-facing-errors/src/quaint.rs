@@ -5,7 +5,12 @@ use crate::{common, query_engine, KnownError};
 use indoc::formatdoc;
 use quaint::{error::ErrorKind, prelude::ConnectionInfo};
 
-#[cfg(not(target_arch = "wasm32"))]
+#[cfg(any(
+    feature = "mssql-native",
+    feature = "mysql-native",
+    feature = "postgresql-native",
+    feature = "sqlite-native"
+))]
 use quaint::{connector::NativeConnectionInfo, error::NativeErrorKind};
 
 impl From<&quaint::error::DatabaseConstraint> for query_engine::DatabaseConstraint {
@@ -35,9 +40,10 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
 
     match (kind, connection_info) {
         (ErrorKind::DatabaseDoesNotExist { .. }, ConnectionInfo::External(_)) => default_value,
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(any(feature = "mssql-native", feature = "mysql-native", feature = "postgresql-native"))]
+        #[allow(unused_variables)]
         (ErrorKind::DatabaseDoesNotExist { db_name }, _) => match connection_info {
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "postgresql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Postgres(url)) => {
                 Some(KnownError::new(common::DatabaseDoesNotExist::Postgres {
                     database_name: db_name.to_string(),
@@ -45,7 +51,7 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
                     database_port: url.port(),
                 }))
             }
-            #[cfg(feature = "mysql")]
+            #[cfg(feature = "mysql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mysql(url)) => {
                 Some(KnownError::new(common::DatabaseDoesNotExist::Mysql {
                     database_name: url.dbname().to_owned(),
@@ -53,7 +59,7 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
                     database_port: url.port(),
                 }))
             }
-            #[cfg(feature = "mssql")]
+            #[cfg(feature = "mssql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mssql(url)) => {
                 Some(KnownError::new(common::DatabaseDoesNotExist::Mssql {
                     database_name: url.dbname().to_owned(),
@@ -65,16 +71,16 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
         },
 
         (ErrorKind::DatabaseAccessDenied { .. }, ConnectionInfo::External(_)) => default_value,
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(any(feature = "mysql-native", feature = "postgresql-native"))]
         (ErrorKind::DatabaseAccessDenied { .. }, _) => match connection_info {
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "postgresql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Postgres(url)) => {
                 Some(KnownError::new(common::DatabaseAccessDenied {
                     database_user: url.username().into_owned(),
                     database_name: format!("{}.{}", url.dbname(), url.schema()),
                 }))
             }
-            #[cfg(feature = "mysql")]
+            #[cfg(feature = "mysql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mysql(url)) => {
                 Some(KnownError::new(common::DatabaseAccessDenied {
                     database_user: url.username().into_owned(),
@@ -85,9 +91,9 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
         },
 
         (ErrorKind::DatabaseAlreadyExists { .. }, ConnectionInfo::External(_)) => default_value,
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(any(feature = "mysql-native", feature = "postgresql-native"))]
         (ErrorKind::DatabaseAlreadyExists { db_name }, _) => match connection_info {
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "postgresql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Postgres(url)) => {
                 Some(KnownError::new(common::DatabaseAlreadyExists {
                     database_name: format!("{db_name}"),
@@ -95,7 +101,7 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
                     database_port: url.port(),
                 }))
             }
-            #[cfg(feature = "mysql")]
+            #[cfg(feature = "mysql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mysql(url)) => {
                 Some(KnownError::new(common::DatabaseAlreadyExists {
                     database_name: format!("{db_name}"),
@@ -107,16 +113,16 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
         },
 
         (ErrorKind::AuthenticationFailed { .. }, ConnectionInfo::External(_)) => default_value,
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(any(feature = "mysql-native", feature = "postgresql-native"))]
         (ErrorKind::AuthenticationFailed { user }, _) => match connection_info {
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "postgresql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Postgres(url)) => {
                 Some(KnownError::new(common::IncorrectDatabaseCredentials {
                     database_user: format!("{user}"),
                     database_host: url.host().to_owned(),
                 }))
             }
-            #[cfg(feature = "mysql")]
+            #[cfg(feature = "mysql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mysql(url)) => {
                 Some(KnownError::new(common::IncorrectDatabaseCredentials {
                     database_user: format!("{user}"),
@@ -127,9 +133,9 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
         },
 
         (ErrorKind::SocketTimeout { .. }, ConnectionInfo::External(_)) => default_value,
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(any(feature = "mssql-native", feature = "mysql-native", feature = "postgresql-native"))]
         (ErrorKind::SocketTimeout, _) => match connection_info {
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "postgresql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Postgres(url)) => {
                 let time = match url.socket_timeout() {
                     Some(dur) => format!("{}s", dur.as_secs()),
@@ -142,7 +148,7 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
                         .into(),
                 }))
             }
-            #[cfg(feature = "mysql")]
+            #[cfg(feature = "mysql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mysql(url)) => {
                 let time = match url.socket_timeout() {
                     Some(dur) => format!("{}s", dur.as_secs()),
@@ -155,7 +161,7 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
                         .into(),
                 }))
             }
-            #[cfg(feature = "mssql")]
+            #[cfg(feature = "mssql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mssql(url)) => {
                 let time = match url.socket_timeout() {
                     Some(dur) => format!("{}s", dur.as_secs()),
@@ -172,26 +178,26 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
         },
 
         (ErrorKind::TableDoesNotExist { .. }, ConnectionInfo::External(_)) => default_value,
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(any(feature = "mssql-native", feature = "mysql-native", feature = "postgresql-native"))]
         (ErrorKind::TableDoesNotExist { table: model }, _) => match connection_info {
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "postgresql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Postgres(_)) => Some(KnownError::new(common::InvalidModel {
                 model: format!("{model}"),
                 kind: common::ModelKind::Table,
             })),
-            #[cfg(feature = "mysql")]
+            #[cfg(feature = "postgresql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mysql(_)) => Some(KnownError::new(common::InvalidModel {
                 model: format!("{model}"),
                 kind: common::ModelKind::Table,
             })),
-            #[cfg(feature = "sqlite")]
+            #[cfg(feature = "sqlite-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Sqlite { .. }) => {
                 Some(KnownError::new(common::InvalidModel {
                     model: format!("{model}"),
                     kind: common::ModelKind::Table,
                 }))
             }
-            #[cfg(feature = "mssql")]
+            #[cfg(feature = "mssql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mssql(_)) => Some(KnownError::new(common::InvalidModel {
                 model: format!("{model}"),
                 kind: common::ModelKind::Table,
@@ -223,23 +229,28 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
             }))
         }
 
-        #[cfg(not(target_arch = "wasm32"))]
+        #[cfg(any(
+            feature = "mssql-native",
+            feature = "mysql-native",
+            feature = "postgresql-native",
+            feature = "sqlite-native"
+        ))]
         (ErrorKind::Native(native_error_kind), _) => match (native_error_kind, connection_info) {
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "postgresql-native")]
             (NativeErrorKind::ConnectionError(_), ConnectionInfo::Native(NativeConnectionInfo::Postgres(url))) => {
                 Some(KnownError::new(common::DatabaseNotReachable {
                     database_port: url.port(),
                     database_host: url.host().to_owned(),
                 }))
             }
-            #[cfg(feature = "mysql")]
+            #[cfg(feature = "mysql-native")]
             (NativeErrorKind::ConnectionError(_), ConnectionInfo::Native(NativeConnectionInfo::Mysql(url))) => {
                 Some(KnownError::new(common::DatabaseNotReachable {
                     database_port: url.port(),
                     database_host: url.host().to_owned(),
                 }))
             }
-            #[cfg(feature = "mssql")]
+            #[cfg(feature = "mssql-native")]
             (NativeErrorKind::ConnectionError(_), ConnectionInfo::Native(NativeConnectionInfo::Mssql(url))) => {
                 Some(KnownError::new(common::DatabaseNotReachable {
                     database_port: url.port(),
@@ -249,21 +260,21 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
             (NativeErrorKind::TlsError { message }, _) => Some(KnownError::new(common::TlsConnectionError {
                 message: message.into(),
             })),
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "postgresql-native")]
             (NativeErrorKind::ConnectTimeout, ConnectionInfo::Native(NativeConnectionInfo::Postgres(url))) => {
                 Some(KnownError::new(common::DatabaseNotReachable {
                     database_host: url.host().to_owned(),
                     database_port: url.port(),
                 }))
             }
-            #[cfg(feature = "mysql")]
+            #[cfg(feature = "mysql-native")]
             (NativeErrorKind::ConnectTimeout, ConnectionInfo::Native(NativeConnectionInfo::Mysql(url))) => {
                 Some(KnownError::new(common::DatabaseNotReachable {
                     database_host: url.host().to_owned(),
                     database_port: url.port(),
                 }))
             }
-            #[cfg(feature = "mssql")]
+            #[cfg(feature = "mssql-native")]
             (NativeErrorKind::ConnectTimeout, ConnectionInfo::Native(NativeConnectionInfo::Mssql(url))) => {
                 Some(KnownError::new(common::DatabaseNotReachable {
                     database_host: url.host().to_owned(),

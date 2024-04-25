@@ -3560,6 +3560,7 @@ dependencies = [
  "bit-vec",
  "byteorder",
  "bytes",
+ "cfg_aliases 0.1.1",
  "chrono",
  "connection-string",
  "crosstarget-utils",
@@ -4222,6 +4223,7 @@ name = "request-handlers"
 version = "0.1.0"
 dependencies = [
  "bigdecimal",
+ "cfg_aliases 0.2.0",
  "codspeed-criterion-compat",
  "connection-string",
  "dmmf",

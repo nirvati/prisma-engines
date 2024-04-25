@@ -15,7 +15,13 @@ quaint = { path = "../../quaint", default-features = false, optional = true }
 
 [features]
 default = []
-mssql = ["quaint", "quaint/mssql"]
-mysql = ["quaint", "quaint/mysql"]
-postgresql = ["quaint", "quaint/postgresql"]
-sqlite = ["quaint", "quaint/sqlite"]
+all-native = [
+    "postgresql-native",
+    "mssql-native",
+    "mysql-native",
+    "sqlite-native",
+]
+postgresql-native = ["quaint", "quaint/postgresql-native"]
+mssql-native = ["quaint", "quaint/mssql-native"]
+mysql-native = ["quaint", "quaint/mysql-native"]
+sqlite-native = ["quaint", "quaint/sqlite-native"]
