@@ -144,6 +144,7 @@ impl PostgresUrl {
         }
 
         if let Some(schema) = &self.query_params.schema {
+            #[cfg(feature = "cockroachdb")]
             if self.flavour().is_cockroach() && is_safe_identifier(schema) {
                 config.search_path(CockroachSearchPath(schema).to_string());
             }
@@ -225,9 +226,15 @@ impl PostgreSql {
         if let Some(schema) = &url.query_params.schema {
             // PGBouncer does not support the search_path connection parameter.
             // https://www.pgbouncer.org/config.html#ignore_startup_parameters
+
+            #[cfg(feature = "cockroachdb")]
+            let is_cockroach_and_unsafe = url.flavour().is_cockroach() && !is_safe_identifier(schema);
+            #[cfg(not(feature = "cockroachdb"))]
+            let is_cockroach_and_unsafe = false;
+
             if url.query_params.pg_bouncer
                 || url.flavour().is_unknown()
-                || (url.flavour().is_cockroach() && !is_safe_identifier(schema))
+                || is_cockroach_and_unsafe
             {
                 let session_variables = format!(
                     r##"{set_search_path}"##,
@@ -319,8 +326,10 @@ impl PostgreSql {
 }
 
 // A SearchPath connection parameter (Display-impl) for connection initialization.
+#[cfg(feature = "cockroachdb")]
 struct CockroachSearchPath<'a>(&'a str);
 
+#[cfg(feature = "cockroachdb")]
 impl Display for CockroachSearchPath<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(self.0)
@@ -528,6 +537,7 @@ impl Queryable for PostgreSql {
 
 /// Sorted list of CockroachDB's reserved keywords.
 /// Taken from https://www.cockroachlabs.com/docs/stable/keywords-and-identifiers.html#keywords
+#[cfg(feature = "cockroachdb")]
 const RESERVED_KEYWORDS: [&str; 79] = [
     "all",
     "analyse",
@@ -612,6 +622,7 @@ const RESERVED_KEYWORDS: [&str; 79] = [
 
 /// Sorted list of CockroachDB's reserved type function names.
 /// Taken from https://www.cockroachlabs.com/docs/stable/keywords-and-identifiers.html#keywords
+#[cfg(feature = "cockroachdb")]
 const RESERVED_TYPE_FUNCTION_NAMES: [&str; 18] = [
     "authorization",
     "collation",
@@ -639,6 +650,7 @@ const RESERVED_TYPE_FUNCTION_NAMES: [&str; 18] = [
 ///
 /// Spec can be found here: https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
 /// or here: https://www.cockroachlabs.com/docs/stable/keywords-and-identifiers.html#rules-for-identifiers
+#[cfg(feature = "cockroachdb")]
 fn is_safe_identifier(ident: &str) -> bool {
     if ident.is_empty() {
         return false;
