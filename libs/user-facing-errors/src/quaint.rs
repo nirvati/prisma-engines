@@ -185,7 +185,7 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
                 model: format!("{model}"),
                 kind: common::ModelKind::Table,
             })),
-            #[cfg(feature = "postgresql-native")]
+            #[cfg(feature = "mysql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mysql(_)) => Some(KnownError::new(common::InvalidModel {
                 model: format!("{model}"),
                 kind: common::ModelKind::Table,
