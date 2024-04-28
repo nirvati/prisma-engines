@@ -97,7 +97,7 @@ fn render_unique(unique: IndexPair<'_>) -> renderer::UniqueFieldAttribute<'_> {
         opts.map(map);
     }
 
-    #[cfg(feature = "mssql")]
+    #[cfg(feature = "mssql-native")]
     if let Some(clustered) = unique.clustered() {
         opts.clustered(clustered);
     }

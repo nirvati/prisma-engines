@@ -74,7 +74,7 @@ impl<'a> IndexPair<'a> {
 
     /// SQL Server specific clustering setting. A value is returned if
     /// non-default.
-    #[cfg(feature = "mssql")]
+    #[cfg(feature = "mssql-native")]
     pub(crate) fn clustered(self) -> Option<bool> {
         if !self.context.sql_family.is_mssql() {
             return None;
@@ -97,7 +97,7 @@ impl<'a> IndexPair<'a> {
 
     /// A PostgreSQL specific algorithm. Defines the data structure
     /// that defines the index.
-    #[cfg(feature = "postgresql")]
+    #[cfg(feature = "postgresql-native")]
     pub(crate) fn algorithm(self) -> Option<&'static str> {
         if !self.context.sql_family().is_postgres() {
             return None;

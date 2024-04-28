@@ -34,7 +34,7 @@ impl<'a> IdPair<'a> {
 
     /// SQL Server specific clustering setting. A value is returned if
     /// non-default.
-    #[cfg(feature = "mssql")]
+    #[cfg(feature = "mssql-native")]
     pub(crate) fn clustered(self) -> Option<bool> {
         if !self.context.sql_family.is_mssql() {
             return None;

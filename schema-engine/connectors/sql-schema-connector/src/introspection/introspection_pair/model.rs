@@ -76,7 +76,7 @@ impl<'a> ModelPair<'a> {
     pub(crate) fn expression_indexes(self) -> impl Iterator<Item = &'a str> {
         let mut indexes: Option<&Vec<(TableId, String)>> = None;
 
-        #[cfg(feature = "postgresql")]
+        #[cfg(feature = "postgresql-native")]
         if self.context.sql_family().is_postgres() {
             let data: &sql::postgres::PostgresSchemaExt = self.context.sql_schema.downcast_connector_data();
 

@@ -36,13 +36,13 @@ pub(crate) struct DatamodelCalculatorContext<'a> {
 impl<'a> DatamodelCalculatorContext<'a> {
     pub(crate) fn new(ctx: &'a IntrospectionContext, sql_schema: &'a sql::SqlSchema, search_path: &'a str) -> Self {
         let flavour: Box<dyn IntrospectionFlavour> = match ctx.sql_family() {
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "postgresql-native")]
             SqlFamily::Postgres => Box::new(flavour::PostgresIntrospectionFlavour),
-            #[cfg(feature = "mysql")]
+            #[cfg(feature = "mysql-native")]
             SqlFamily::Mysql => Box::new(flavour::MysqlIntrospectionFlavour),
-            #[cfg(feature = "sqlite")]
+            #[cfg(feature = "sqlite-native")]
             SqlFamily::Sqlite => Box::new(flavour::SqliteIntrospectionFlavour),
-            #[cfg(feature = "mssql")]
+            #[cfg(feature = "mssql-native")]
             SqlFamily::Mssql => Box::new(flavour::SqlServerIntrospectionFlavour),
         };
 

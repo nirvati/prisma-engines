@@ -1,22 +1,22 @@
-#[cfg(feature = "mysql")]
+#[cfg(feature = "mysql-native")]
 mod mysql;
-#[cfg(feature = "postgresql")]
+#[cfg(feature = "postgresql-native")]
 mod postgresql;
-#[cfg(feature = "sqlite")]
+#[cfg(feature = "sqlite-native")]
 mod sqlite;
-#[cfg(feature = "mssql")]
+#[cfg(feature = "mssql-native")]
 mod sqlserver;
 
 use sql::{ForeignKeyWalker, IndexColumnWalker, IndexWalker, TableWalker};
 use sql_schema_describer as sql;
 
-#[cfg(feature = "mysql")]
+#[cfg(feature = "mysql-native")]
 pub(super) use mysql::MysqlIntrospectionFlavour;
-#[cfg(feature = "postgresql")]
+#[cfg(feature = "postgresql-native")]
 pub(super) use postgresql::PostgresIntrospectionFlavour;
-#[cfg(feature = "sqlite")]
+#[cfg(feature = "sqlite-native")]
 pub(super) use sqlite::SqliteIntrospectionFlavour;
-#[cfg(feature = "mssql")]
+#[cfg(feature = "mssql-native")]
 pub(super) use sqlserver::SqlServerIntrospectionFlavour;
 
 use schema_connector::Warnings;

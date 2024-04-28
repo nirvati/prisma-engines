@@ -4,7 +4,7 @@ use crate::{
     sql_schema_differ::{ColumnChange, ColumnChanges},
 };
 use enumflags2::BitFlags;
-#[cfg(feature = "postgresql")]
+#[cfg(feature = "postgresql-native")]
 use sql_schema_describer::postgres::{self, PostgresSchemaExt};
 use sql_schema_describer::{
     walkers::{TableColumnWalker, TableWalker},
@@ -159,21 +159,21 @@ impl SqlMigration {
                         idx,
                     ));
                 }
-                #[cfg(feature = "postgresql")]
+                #[cfg(feature = "postgresql-native")]
                 SqlMigrationStep::CreateExtension(create_extension) => {
                     let ext: &PostgresSchemaExt = self.schemas().next.downcast_connector_data();
                     let extension = ext.get_extension(create_extension.id);
 
                     drift_items.insert((DriftType::CreatedExtension, &extension.name, idx));
                 }
-                #[cfg(feature = "postgresql")]
+                #[cfg(feature = "postgresql-native")]
                 SqlMigrationStep::AlterExtension(alter_extension) => {
                     let ext: &PostgresSchemaExt = self.schemas().previous.downcast_connector_data();
                     let extension = ext.get_extension(alter_extension.ids.previous);
 
                     drift_items.insert((DriftType::AlteredExtension, &extension.name, idx));
                 }
-                #[cfg(feature = "postgresql")]
+                #[cfg(feature = "postgresql-native")]
                 SqlMigrationStep::DropExtension(drop_extension) => {
                     let ext: &PostgresSchemaExt = self.schemas().previous.downcast_connector_data();
                     let extension = ext.get_extension(drop_extension.id);
@@ -401,16 +401,16 @@ impl SqlMigration {
                     out.push_str(index.previous.name());
                     out.push_str("`\n");
                 }
-                #[cfg(feature = "postgresql")]
+                #[cfg(feature = "postgresql-native")]
                 SqlMigrationStep::CreateExtension(create_extension) => {
                     let ext: &PostgresSchemaExt = self.schemas().next.downcast_connector_data();
                     out.push_str("  - ");
                     out.push_str(&ext.get_extension(create_extension.id).name);
                     out.push('\n');
                 }
-                #[cfg(feature = "postgresql")]
+                #[cfg(feature = "postgresql-native")]
                 SqlMigrationStep::AlterExtension(_) => {}
-                #[cfg(feature = "postgresql")]
+                #[cfg(feature = "postgresql-native")]
                 SqlMigrationStep::DropExtension(_) => {}
             }
         }
@@ -456,11 +456,11 @@ fn render_column_changes(columns: MigrationPair<TableColumnWalker<'_>>, changes:
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum SqlMigrationStep {
     CreateSchema(sql_schema_describer::NamespaceId),
-    #[cfg(feature = "postgresql")]
+    #[cfg(feature = "postgresql-native")]
     DropExtension(DropExtension),
-    #[cfg(feature = "postgresql")]
+    #[cfg(feature = "postgresql-native")]
     CreateExtension(CreateExtension),
-    #[cfg(feature = "postgresql")]
+    #[cfg(feature = "postgresql-native")]
     AlterExtension(AlterExtension),
     AlterSequence(MigrationPair<u32>, SequenceChanges),
     DropView(DropView),
@@ -537,30 +537,30 @@ impl SqlMigrationStep {
             SqlMigrationStep::RedefineTables { .. } => "RedefineTables",
             SqlMigrationStep::RenameForeignKey { .. } => "RenameForeignKey",
             SqlMigrationStep::RenameIndex { .. } => "RenameIndex",
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "postgresql-native")]
             SqlMigrationStep::CreateExtension(_) => "CreateExtension",
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "postgresql-native")]
             SqlMigrationStep::AlterExtension(_) => "AlterExtension",
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "postgresql-native")]
             SqlMigrationStep::DropExtension(_) => "DropExtension",
         }
     }
 }
 
-#[cfg(feature = "postgresql")]
+#[cfg(feature = "postgresql-native")]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct AlterExtension {
     pub ids: MigrationPair<postgres::ExtensionId>,
     pub changes: Vec<ExtensionChange>,
 }
 
-#[cfg(feature = "postgresql")]
+#[cfg(feature = "postgresql-native")]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct CreateExtension {
     pub id: postgres::ExtensionId,
 }
 
-#[cfg(feature = "postgresql")]
+#[cfg(feature = "postgresql-native")]
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) struct DropExtension {
     pub id: postgres::ExtensionId,

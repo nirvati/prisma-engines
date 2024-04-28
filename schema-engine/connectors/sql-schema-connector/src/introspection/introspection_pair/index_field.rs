@@ -58,7 +58,7 @@ impl<'a> IndexFieldPair<'a> {
     }
 
     /// A PostgreSQL specific operator class for the indexed column.
-    #[cfg(feature = "postgresql")]
+    #[cfg(feature = "postgresql-native")]
     pub(crate) fn opclass(self) -> Option<IndexOps<'a>> {
         if !self.context.sql_family.is_postgres() {
             return None;

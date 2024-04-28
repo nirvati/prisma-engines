@@ -1,10 +1,10 @@
-#[cfg(feature = "mssql")]
+#[cfg(feature = "mssql-native")]
 mod mssql;
-#[cfg(feature = "mysql")]
+#[cfg(feature = "mysql-native")]
 mod mysql;
-#[cfg(feature = "postgresql")]
+#[cfg(feature = "postgresql-native")]
 mod postgres;
-#[cfg(feature = "sqlite")]
+#[cfg(feature = "sqlite-native")]
 mod sqlite;
 
 use psl::parser_database::{ast::FieldArity, walkers::*};

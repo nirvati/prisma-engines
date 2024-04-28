@@ -27,7 +27,7 @@ pub(super) fn render(id: IdPair<'_>) -> renderer::IdDefinition<'_> {
         definition.map(map);
     }
 
-    #[cfg(feature = "mssql")]
+    #[cfg(feature = "mssql-native")]
     if let Some(clustered) = id.clustered() {
         definition.clustered(clustered);
     }

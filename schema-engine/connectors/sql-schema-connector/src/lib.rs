@@ -35,7 +35,7 @@ pub struct SqlSchemaConnector {
 
 impl SqlSchemaConnector {
     /// Initialize a PostgreSQL migration connector.
-    #[cfg(feature = "postgresql")]
+    #[cfg(feature = "postgresql-native")]
     pub fn new_postgres() -> Self {
         SqlSchemaConnector {
             flavour: Box::new(flavour::PostgresFlavour::new_postgres()),
@@ -44,7 +44,7 @@ impl SqlSchemaConnector {
     }
 
     /// Initialize a CockroachDb migration connector.
-    #[cfg(feature = "postgresql")]
+    #[cfg(feature = "postgresql-native")]
     pub fn new_cockroach() -> Self {
         SqlSchemaConnector {
             flavour: Box::new(flavour::PostgresFlavour::new_cockroach()),
@@ -56,7 +56,7 @@ impl SqlSchemaConnector {
     ///
     /// Use [`Self::new_postgres()`] or [`Self::new_cockroach()`] instead when the provider is
     /// explicitly specified by user or already known otherwise.
-    #[cfg(feature = "postgresql")]
+    #[cfg(feature = "postgresql-native")]
     pub fn new_postgres_like() -> Self {
         SqlSchemaConnector {
             flavour: Box::<flavour::PostgresFlavour>::default(),
@@ -65,7 +65,7 @@ impl SqlSchemaConnector {
     }
 
     /// Initialize a SQLite migration connector.
-    #[cfg(feature = "sqlite")]
+    #[cfg(feature = "sqlite-native")]
     pub fn new_sqlite() -> Self {
         SqlSchemaConnector {
             flavour: Box::<flavour::SqliteFlavour>::default(),
@@ -74,7 +74,7 @@ impl SqlSchemaConnector {
     }
 
     /// Initialize a MySQL migration connector.
-    #[cfg(feature = "mysql")]
+    #[cfg(feature = "mysql-native")]
     pub fn new_mysql() -> Self {
         SqlSchemaConnector {
             flavour: Box::<flavour::MysqlFlavour>::default(),
@@ -83,7 +83,7 @@ impl SqlSchemaConnector {
     }
 
     /// Initialize a MSSQL migration connector.
-    #[cfg(feature = "mssql")]
+    #[cfg(feature = "mssql-native")]
     pub fn new_mssql() -> Self {
         SqlSchemaConnector {
             flavour: Box::<flavour::MssqlFlavour>::default(),

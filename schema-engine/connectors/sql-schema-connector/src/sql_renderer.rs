@@ -9,13 +9,13 @@
 //!   statements, this is done later.
 
 mod common;
-#[cfg(feature = "mssql")]
+#[cfg(feature = "mssql-native")]
 mod mssql_renderer;
-#[cfg(feature = "mysql")]
+#[cfg(feature = "mysql-native")]
 mod mysql_renderer;
-#[cfg(feature = "postgresql")]
+#[cfg(feature = "postgresql-native")]
 mod postgres_renderer;
-#[cfg(feature = "sqlite")]
+#[cfg(feature = "sqlite-native")]
 mod sqlite_renderer;
 
 pub(crate) use common::IteratorJoin;
@@ -123,12 +123,12 @@ pub(crate) trait SqlRenderer {
         unreachable!()
     }
 
-    #[cfg(feature = "postgresql")]
+    #[cfg(feature = "postgresql-native")]
     fn render_create_extension(&self, _create: &sql_migration::CreateExtension, _schema: &SqlSchema) -> Vec<String> {
         unreachable!("render_create_extension")
     }
 
-    #[cfg(feature = "postgresql")]
+    #[cfg(feature = "postgresql-native")]
     fn render_alter_extension(
         &self,
         _alter: &sql_migration::AlterExtension,
@@ -137,7 +137,7 @@ pub(crate) trait SqlRenderer {
         unreachable!("render_alter_extension")
     }
 
-    #[cfg(feature = "postgresql")]
+    #[cfg(feature = "postgresql-native")]
     fn render_drop_extension(&self, _drop: &sql_migration::DropExtension, _schema: &SqlSchema) -> Vec<String> {
         unreachable!("render_drop_extension")
     }

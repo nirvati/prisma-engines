@@ -10,7 +10,7 @@ pub(crate) type DefaultValuePair<'a> =
     IntrospectionPair<'a, Option<walkers::DefaultValueWalker<'a>>, sql::ColumnWalker<'a>>;
 
 pub(crate) enum DefaultKind<'a> {
-    #[cfg(feature = "postgresql")]
+    #[cfg(feature = "postgresql-native")]
     Sequence(&'a sql::postgres::Sequence),
     DbGenerated(Option<&'a str>),
     Autoincrement,
@@ -34,7 +34,7 @@ impl<'a> DefaultValuePair<'a> {
         let family = self.next.column_type_family();
 
         match (sql_kind, family) {
-            #[cfg(feature = "postgresql")]
+            #[cfg(feature = "postgresql-native")]
             (Some(sql::DefaultKind::Sequence(name)), _) if self.context.is_cockroach() => {
                 let connector_data: &sql::postgres::PostgresSchemaExt =
                     self.context.sql_schema.downcast_connector_data();
