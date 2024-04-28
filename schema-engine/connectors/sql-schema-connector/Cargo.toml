@@ -7,7 +7,7 @@ version = "0.1.0"
 vendored-openssl = ["quaint/vendored-openssl"]
 mssql-native = ["schema-connector/mssql", "sql-schema-describer/mssql", "sql-ddl/mssql", "user-facing-errors/mssql-native", "quaint/mssql-native"]
 mysql-native = ["schema-connector/mysql", "sql-schema-describer/mysql", "sql-ddl/mysql", "user-facing-errors/mysql-native", "quaint/mysql-native"]
-postgresql-native = ["schema-connector/postgresql", "sql-schema-describer/postgresql", "sql-ddl/postgres", "user-facing-errors/postgresql-native", "quaint/postgres-native"]
+postgresql-native = ["schema-connector/postgresql", "sql-schema-describer/postgresql", "sql-ddl/postgres", "user-facing-errors/postgresql-native", "quaint/postgresql-native"]
 sqlite-native = ["schema-connector/sqlite", "sql-schema-describer/sqlite", "sql-ddl/sqlite", "user-facing-errors/sqlite-native", "quaint/sqlite-native"]
 
 [dependencies]
