@@ -18,7 +18,9 @@ use crate::{
 use async_trait::async_trait;
 use futures::{future::FutureExt, lock::Mutex};
 use lru_cache::LruCache;
+#[cfg(feature = "postgresql-native-tls")]
 use native_tls::{Certificate, Identity, TlsConnector};
+#[cfg(feature = "postgresql-native-tls")]
 use postgres_native_tls::MakeTlsConnector;
 use std::{
     borrow::Borrow,
@@ -54,12 +56,14 @@ pub struct PostgreSql {
 }
 
 #[derive(Debug)]
+#[cfg(feature = "postgresql-native-tls")]
 struct SslAuth {
     certificate: Hidden<Option<Certificate>>,
     identity: Hidden<Option<Identity>>,
     ssl_accept_mode: SslAcceptMode,
 }
 
+#[cfg(feature = "postgresql-native-tls")]
 impl Default for SslAuth {
     fn default() -> Self {
         Self {
@@ -70,6 +74,7 @@ impl Default for SslAuth {
     }
 }
 
+#[cfg(feature = "postgresql-native-tls")]
 impl SslAuth {
     fn certificate(&mut self, certificate: Certificate) -> &mut Self {
         self.certificate = Hidden(Some(certificate));
@@ -87,6 +92,7 @@ impl SslAuth {
     }
 }
 
+#[cfg(feature = "postgresql-native-tls")]
 impl SslParams {
     async fn into_auth(self) -> crate::Result<SslAuth> {
         let mut auth = SslAuth::default();
@@ -192,8 +198,10 @@ impl PostgreSql {
     pub async fn new(url: PostgresUrl) -> crate::Result<Self> {
         let config = url.to_config();
 
+        #[cfg(feature = "postgresql-native-tls")]
         let mut tls_builder = TlsConnector::builder();
 
+        #[cfg(feature = "postgresql-native-tls")]
         {
             let ssl_params = url.ssl_params();
             let auth = ssl_params.to_owned().into_auth().await?;
@@ -209,7 +217,10 @@ impl PostgreSql {
             }
         }
 
+        #[cfg(feature = "postgresql-native-tls")]
         let tls = MakeTlsConnector::new(tls_builder.build()?);
+        #[cfg(not(feature = "postgresql-native-tls"))]
+        let tls = tokio_postgres::NoTls;
         let (client, conn) = timeout::connect(url.connect_timeout(), config.connect(tls)).await?;
 
         tokio::spawn(conn.map(|r| match r {

@@ -42,16 +42,15 @@ vendored-openssl = [
 
 postgresql-native = [
   "postgresql",
-  "native-tls",
   "tokio-postgres",
   "postgres-types",
-  "postgres-native-tls",
   "bytes",
   "tokio",
   "bit-vec",
   "lru-cache",
   "byteorder",
 ]
+postgresql-native-tls = ["postgres-native-tls", "native-tls"]
 postgresql = []
 
 mssql-native = ["mssql", "tiberius", "tokio-util", "tokio/time", "tokio/net"]
