@@ -28,7 +28,6 @@ impl From<tokio_postgres::error::Error> for Error {
             return PostgresError::from(db_error).into();
         }
 
-        #[cfg(feature = "postgresql-native-tls")]
         if let Some(tls_error) = try_extracting_tls_error(&e) {
             return tls_error;
         }
@@ -57,7 +56,6 @@ impl From<tokio_postgres::error::Error> for Error {
                 builder.build()
             } // sigh...
             // https://github.com/sfackler/rust-postgres/blob/0c84ed9f8201f4e5b4803199a24afa2c9f3723b2/tokio-postgres/src/connect_tls.rs#L37
-            #[cfg(feature = "postgresql-native-tls")]
             "error performing TLS handshake: server does not support TLS" => {
                 let mut builder = Error::builder(ErrorKind::Native(NativeErrorKind::TlsError {
                     message: reason.clone(),
@@ -94,7 +92,6 @@ fn try_extracting_uuid_error(err: &tokio_postgres::error::Error) -> Option<Error
         .map(|kind| Error::builder(kind).build())
 }
 
-#[cfg(feature = "postgresql-native-tls")]
 fn try_extracting_tls_error(err: &tokio_postgres::error::Error) -> Option<Error> {
     use std::error::Error;
 
@@ -117,14 +114,12 @@ fn try_extracting_io_error(err: &tokio_postgres::error::Error) -> Option<Error> 
         .map(|kind| Error::builder(kind).build())
 }
 
-#[cfg(feature = "postgresql-native-tls")]
 impl From<native_tls::Error> for Error {
     fn from(e: native_tls::Error) -> Error {
         Error::from(&e)
     }
 }
 
-#[cfg(feature = "postgresql-native-tls")]
 impl From<&native_tls::Error> for Error {
     fn from(e: &native_tls::Error) -> Error {
         let kind = ErrorKind::Native(NativeErrorKind::TlsError {
