@@ -2,7 +2,7 @@ use indoc::{formatdoc, indoc};
 use pretty_assertions::assert_eq;
 use quaint::prelude::Insert;
 use schema_core::{
-    json_rpc::types::{DatasourceParam, EnsureConnectionValidityParams},
+    json_rpc::types::{DatasourceParam, EnsureConnectionValidityParams, SchemasContainer},
     schema_connector::ConnectorError,
 };
 use serde_json::json;
@@ -16,7 +16,12 @@ pub(crate) async fn connection_error(schema: String) -> ConnectorError {
     };
 
     api.ensure_connection_validity(EnsureConnectionValidityParams {
-        datasource: DatasourceParam::SchemaString(SchemaContainer { schema }),
+        datasource: DatasourceParam::Schema(SchemasContainer {
+            files: vec![SchemaContainer {
+                path: "schema.prisma".to_string(),
+                content: schema,
+            }],
+        }),
     })
     .await
     .unwrap_err()
@@ -117,7 +122,7 @@ fn unreachable_database_must_return_a_proper_error_on_mysql(api: TestApi) {
     let json_error = serde_json::to_value(&error.to_user_facing()).unwrap();
     let expected = json!({
         "is_panic": false,
-        "message": format!("Can't reach database server at `{host}`:`{port}`\n\nPlease make sure your database server is running at `{host}`:`{port}`."),
+        "message": format!("Can't reach database server at `{host}:{port}`\n\nPlease make sure your database server is running at `{host}:{port}`."),
         "meta": {
             "database_host": host,
             "database_port": port,
@@ -151,7 +156,7 @@ fn unreachable_database_must_return_a_proper_error_on_postgres(api: TestApi) {
     let json_error = serde_json::to_value(&error.to_user_facing()).unwrap();
     let expected = json!({
         "is_panic": false,
-        "message": format!("Can't reach database server at `{host}`:`{port}`\n\nPlease make sure your database server is running at `{host}`:`{port}`."),
+        "message": format!("Can't reach database server at `{host}:{port}`\n\nPlease make sure your database server is running at `{host}:{port}`."),
         "meta": {
             "database_host": host,
             "database_port": port,
@@ -403,7 +408,12 @@ async fn connection_string_problems_give_a_nice_error() {
         let api = schema_core::schema_api(Some(dm.clone()), None).unwrap();
         let error = api
             .ensure_connection_validity(EnsureConnectionValidityParams {
-                datasource: DatasourceParam::SchemaString(SchemaContainer { schema: dm }),
+                datasource: DatasourceParam::Schema(SchemasContainer {
+                    files: vec![SchemaContainer {
+                        path: "schema.prisma".to_string(),
+                        content: dm,
+                    }],
+                }),
             })
             .await
             .unwrap_err();

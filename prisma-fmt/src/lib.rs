@@ -12,14 +12,14 @@ mod validate;
 
 use log::*;
 use lsp_types::{Position, Range};
-use psl::parser_database::ast;
+use psl::{diagnostics::FileId, parser_database::ast};
 use schema_file_input::SchemaFileInput;
 
 /// The API is modelled on an LSP [completion
 /// request](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/specification-3-16.md#textDocument_completion).
 /// Input and output are both JSON, the request being a `CompletionParams` object and the response
 /// being a `CompletionList` object.
-pub fn text_document_completion(schema: String, params: &str) -> String {
+pub fn text_document_completion(schema_files: String, params: &str) -> String {
     let params = if let Ok(params) = serde_json::from_str::<lsp_types::CompletionParams>(params) {
         params
     } else {
@@ -27,13 +27,18 @@ pub fn text_document_completion(schema: String, params: &str) -> String {
         return serde_json::to_string(&text_document_completion::empty_completion_list()).unwrap();
     };
 
-    let completion_list = text_document_completion::completion(schema, params);
+    let Ok(input) = serde_json::from_str::<SchemaFileInput>(&schema_files) else {
+        warn!("Failed to parse schema file input");
+        return serde_json::to_string(&text_document_completion::empty_completion_list()).unwrap();
+    };
+
+    let completion_list = text_document_completion::completion(input.into(), params);
 
     serde_json::to_string(&completion_list).unwrap()
 }
 
 /// This API is modelled on an LSP [code action request](https://github.com/microsoft/language-server-protocol/blob/gh-pages/_specifications/specification-3-16.md#textDocument_codeAction=). Input and output are both JSON, the request being a `CodeActionParams` object and the response being a list of `CodeActionOrCommand` objects.
-pub fn code_actions(schema: String, params: &str) -> String {
+pub fn code_actions(schema_files: String, params: &str) -> String {
     let params = if let Ok(params) = serde_json::from_str::<lsp_types::CodeActionParams>(params) {
         params
     } else {
@@ -41,7 +46,12 @@ pub fn code_actions(schema: String, params: &str) -> String {
         return serde_json::to_string(&code_actions::empty_code_actions()).unwrap();
     };
 
-    let actions = code_actions::available_actions(schema, params);
+    let Ok(input) = serde_json::from_str::<SchemaFileInput>(&schema_files) else {
+        warn!("Failed to parse schema file input");
+        return serde_json::to_string(&text_document_completion::empty_completion_list()).unwrap();
+    };
+
+    let actions = code_actions::available_actions(input.into(), params);
     serde_json::to_string(&actions).unwrap()
 }
 
@@ -172,7 +182,7 @@ pub fn referential_actions(schema: String) -> String {
 /// type GetConfigResponse = GetConfigErrorResponse | GetConfigSuccessResponse
 ///
 /// ```
-pub fn get_config(get_config_params: String) -> Result<String, String> {
+pub fn get_config(get_config_params: String) -> String {
     get_config::get_config(&get_config_params)
 }
 
@@ -254,16 +264,22 @@ pub(crate) fn position_to_offset(position: &Position, document: &str) -> Option<
 
 #[track_caller]
 /// Converts an LSP range to a span.
-pub(crate) fn range_to_span(range: Range, document: &str) -> ast::Span {
+pub(crate) fn range_to_span(range: Range, document: &str, file_id: FileId) -> ast::Span {
     let start = position_to_offset(&range.start, document).unwrap();
     let end = position_to_offset(&range.end, document).unwrap();
 
-    ast::Span::new(start, end, psl::parser_database::FileId::ZERO)
+    ast::Span::new(start, end, file_id)
 }
 
-/// Gives the LSP position right after the given span.
+/// Gives the LSP position right after the given span, skipping any trailing newlines
 pub(crate) fn position_after_span(span: ast::Span, document: &str) -> Position {
-    offset_to_position(span.end - 1, document)
+    let end = match (document.chars().nth(span.end - 2), document.chars().nth(span.end - 1)) {
+        (Some('\r'), Some('\n')) => span.end - 2,
+        (_, Some('\n')) => span.end - 1,
+        _ => span.end,
+    };
+
+    offset_to_position(end, document)
 }
 
 /// Converts a byte offset to an LSP position, if the given offset
@@ -292,6 +308,9 @@ pub fn offset_to_position(offset: usize, document: &str) -> Position {
 #[cfg(test)]
 mod tests {
     use lsp_types::Position;
+    use psl::diagnostics::{FileId, Span};
+
+    use crate::position_after_span;
 
     // On Windows, a newline is actually two characters.
     #[test]
@@ -302,5 +321,32 @@ mod tests {
         let found_offset = super::position_to_offset(&Position { line: 2, character: 4 }, schema).unwrap();
 
         assert_eq!(found_offset, expected_offset);
+    }
+
+    #[test]
+    fn position_after_span_no_newline() {
+        let str = "some string";
+        let span = Span::new(0, str.len(), FileId::ZERO);
+        let pos = position_after_span(span, str);
+        assert_eq!(pos.line, 0);
+        assert_eq!(pos.character, 11);
+    }
+
+    #[test]
+    fn position_after_span_lf() {
+        let str = "some string\n";
+        let span = Span::new(0, str.len(), FileId::ZERO);
+        let pos = position_after_span(span, str);
+        assert_eq!(pos.line, 0);
+        assert_eq!(pos.character, 11);
+    }
+
+    #[test]
+    fn position_after_span_crlf() {
+        let str = "some string\r\n";
+        let span = Span::new(0, str.len(), FileId::ZERO);
+        let pos = position_after_span(span, str);
+        assert_eq!(pos.line, 0);
+        assert_eq!(pos.character, 11);
     }
 }
