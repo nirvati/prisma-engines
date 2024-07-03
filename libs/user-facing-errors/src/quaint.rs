@@ -129,6 +129,7 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
                     database_host: url.host().to_owned(),
                 }))
             }
+            #[cfg(feature = "mssql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mssql(url)) => {
                 Some(KnownError::new(common::IncorrectDatabaseCredentials {
                     database_user: format!("{user}"),
@@ -180,6 +181,7 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
                         .into(),
                 }))
             }
+            #[cfg(feature = "sqlite-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Sqlite { file_path, db_name: _ }) => {
                 Some(KnownError::new(common::DatabaseOperationTimeout {
                     time: "N/A".into(),
