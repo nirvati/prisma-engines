@@ -9,7 +9,7 @@ psl = { workspace = true, features = ["all"] }
 
 either = "1.8.0"
 async-trait.workspace = true
-bigdecimal = "0.3"
+bigdecimal = "0.4"
 enumflags2.workspace = true
 indexmap.workspace = true
 indoc.workspace = true

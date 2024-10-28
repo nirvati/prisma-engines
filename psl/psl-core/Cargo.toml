@@ -17,7 +17,7 @@ parser-database = { path = "../parser-database" }
 prisma-value = { path = "../../libs/prisma-value" }
 schema-ast = { path = "../schema-ast" }
 
-bigdecimal = "0.3"
+bigdecimal = "0.4"
 chrono = { workspace = true }
 connection-string.workspace = true
 itertools.workspace = true

@@ -7,7 +7,7 @@ version = "0.0.0"
 psl.workspace = true
 itertools.workspace = true
 prisma-value = { path = "../../libs/prisma-value" }
-bigdecimal = "0.3"
+bigdecimal = "0.4"
 thiserror = "1.0"
 
 getrandom = { version = "0.2" }
