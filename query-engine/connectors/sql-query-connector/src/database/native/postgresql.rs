@@ -85,6 +85,7 @@ impl Connector for PostgreSql {
     fn name(&self) -> &'static str {
         match self.flavour {
             PostgresFlavour::Postgres | PostgresFlavour::Unknown => "postgresql",
+            #[cfg(feature = "cockroachdb")]
             PostgresFlavour::Cockroach => "cockroachdb",
         }
     }
