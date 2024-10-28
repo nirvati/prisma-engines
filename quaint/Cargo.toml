@@ -158,7 +158,7 @@ features = [
 ]
 
 [dependencies.bigdecimal]
-version = "0.3"
+version = "0.4"
 
 [dependencies.tokio-postgres]
 features = [

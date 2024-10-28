@@ -29,7 +29,7 @@ sql-query-connector = { path = "../connectors/sql-query-connector", optional = t
 [dev-dependencies]
 insta = "1.7.1"
 schema = { path = "../schema" }
-codspeed-criterion-compat = "1.1.0"
+codspeed-criterion-compat = "2"
 
 [features]
 mongodb = ["mongodb-query-connector", "psl/mongodb"]
