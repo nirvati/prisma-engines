@@ -3,7 +3,7 @@ use crate::connector::MssqlUrl;
 #[cfg(feature = "mysql-native")]
 use crate::connector::MysqlUrl;
 #[cfg(feature = "postgresql-native")]
-use crate::connector::PostgresUrl;
+use crate::connector::PostgresNativeUrl;
 use crate::{
     ast,
     connector::{self, impl_default_TransactionCapable, IsolationLevel, Queryable, Transaction, TransactionCapable},
@@ -32,6 +32,10 @@ impl Queryable for PooledConnection {
 
     async fn query_raw_typed(&self, sql: &str, params: &[ast::Value<'_>]) -> crate::Result<connector::ResultSet> {
         self.inner.query_raw_typed(sql, params).await
+    }
+
+    async fn describe_query(&self, sql: &str) -> crate::Result<connector::DescribedQuery> {
+        self.inner.describe_query(sql).await
     }
 
     async fn execute(&self, q: ast::Query<'_>) -> crate::Result<u64> {
@@ -81,7 +85,7 @@ pub enum QuaintManager {
     Mysql { url: MysqlUrl },
 
     #[cfg(feature = "postgresql")]
-    Postgres { url: PostgresUrl },
+    Postgres { url: PostgresNativeUrl },
 
     #[cfg(feature = "sqlite")]
     Sqlite { url: String, db_name: String },

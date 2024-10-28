@@ -4,7 +4,11 @@ use crate::{
     walkers::*,
     ReferentialAction,
 };
-use std::{borrow::Cow, fmt, hash::Hasher};
+use std::{
+    borrow::Cow,
+    fmt::{self, Debug},
+    hash::Hasher,
+};
 
 /// A relation field on a model in the schema.
 pub type RelationFieldWalker<'db> = Walker<'db, RelationFieldId>;
@@ -97,7 +101,7 @@ impl<'db> RelationFieldWalker<'db> {
         self.db.walk(self.attributes().referenced_model)
     }
 
-    /// The fields in the `@relation(references: ...)` argument.
+    /// The fields in the `@relation(references: [...])` argument.
     pub fn referenced_fields(self) -> Option<impl ExactSizeIterator<Item = ScalarFieldWalker<'db>>> {
         self.attributes()
             .references
@@ -154,7 +158,7 @@ impl<'db> RelationFieldWalker<'db> {
         self.fields()
     }
 
-    /// The fields in the `fields: [...]` argument in the forward relation field.
+    /// The fields in the `@relation(fields: [...])` argument in the forward relation field.
     pub fn fields(self) -> Option<impl ExactSizeIterator<Item = ScalarFieldWalker<'db>> + Clone> {
         let attributes = &self.db.types[self.id];
         attributes
@@ -165,7 +169,7 @@ impl<'db> RelationFieldWalker<'db> {
 }
 
 /// The relation name.
-#[derive(Debug, Clone, PartialOrd)]
+#[derive(Debug, Clone)]
 pub enum RelationName<'db> {
     /// A relation name specified in the AST.
     Explicit(&'db str),
@@ -194,6 +198,12 @@ impl<'db> Ord for RelationName<'db> {
             (Self::Explicit(l0), Self::Generated(r0)) => l0.cmp(&r0.as_str()),
             (Self::Generated(l0), Self::Explicit(r0)) => l0.as_str().cmp(*r0),
         }
+    }
+}
+
+impl<'db> PartialOrd for RelationName<'db> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 

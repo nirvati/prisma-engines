@@ -5,7 +5,7 @@ use crate::{
 };
 use connector_interface::{ConnectionLike, ReadOperations, Transaction, UpdateType, WriteOperations};
 use mongodb::options::{Acknowledgment, ReadConcern, TransactionOptions, WriteConcern};
-use query_engine_metrics::{decrement_gauge, increment_gauge, metrics, PRISMA_CLIENT_QUERIES_ACTIVE};
+use query_engine_metrics::{gauge, PRISMA_CLIENT_QUERIES_ACTIVE};
 use query_structure::{RelationLoadStrategy, SelectionResult};
 use std::collections::HashMap;
 
@@ -26,11 +26,12 @@ impl<'conn> MongoDbTransaction<'conn> {
 
         connection
             .session
-            .start_transaction(options)
+            .start_transaction()
+            .with_options(options)
             .await
             .map_err(|err| MongoError::from(err).into_connector_error())?;
 
-        increment_gauge!(PRISMA_CLIENT_QUERIES_ACTIVE, 1.0);
+        gauge!(PRISMA_CLIENT_QUERIES_ACTIVE).increment(1.0);
 
         Ok(Self { connection })
     }
@@ -39,7 +40,7 @@ impl<'conn> MongoDbTransaction<'conn> {
 #[async_trait]
 impl<'conn> Transaction for MongoDbTransaction<'conn> {
     async fn commit(&mut self) -> connector_interface::Result<()> {
-        decrement_gauge!(PRISMA_CLIENT_QUERIES_ACTIVE, 1.0);
+        gauge!(PRISMA_CLIENT_QUERIES_ACTIVE).decrement(1.0);
 
         utils::commit_with_retry(&mut self.connection.session)
             .await
@@ -49,7 +50,7 @@ impl<'conn> Transaction for MongoDbTransaction<'conn> {
     }
 
     async fn rollback(&mut self) -> connector_interface::Result<()> {
-        decrement_gauge!(PRISMA_CLIENT_QUERIES_ACTIVE, 1.0);
+        gauge!(PRISMA_CLIENT_QUERIES_ACTIVE).decrement(1.0);
 
         self.connection
             .session
@@ -258,7 +259,7 @@ impl<'conn> WriteOperations for MongoDbTransaction<'conn> {
         model: Option<&Model>,
         inputs: HashMap<String, PrismaValue>,
         query_type: Option<String>,
-    ) -> connector_interface::Result<serde_json::Value> {
+    ) -> connector_interface::Result<RawJson> {
         catch(write::query_raw(
             &self.connection.database,
             &mut self.connection.session,

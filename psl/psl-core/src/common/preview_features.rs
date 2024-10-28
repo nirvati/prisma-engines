@@ -80,7 +80,9 @@ features!(
     RelationJoins,
     ReactNative,
     PrismaSchemaFolder,
-    OmitApi
+    OmitApi,
+    TypedSql,
+    StrictUndefinedChecks
 );
 
 /// Generator preview features (alphabetically sorted)
@@ -98,6 +100,8 @@ pub const ALL_PREVIEW_FEATURES: FeatureMap = FeatureMap {
          | Views
          | RelationJoins
          | OmitApi
+         | PrismaSchemaFolder
+         | StrictUndefinedChecks
     }),
     deprecated: enumflags2::make_bitflags!(PreviewFeature::{
         AtomicNumberOperations
@@ -132,7 +136,7 @@ pub const ALL_PREVIEW_FEATURES: FeatureMap = FeatureMap {
         | TransactionApi
         | UncheckedScalarInputs
     }),
-    hidden: enumflags2::make_bitflags!(PreviewFeature::{PrismaSchemaFolder | ReactNative}),
+    hidden: enumflags2::make_bitflags!(PreviewFeature::{ReactNative | TypedSql}),
 };
 
 #[derive(Debug)]

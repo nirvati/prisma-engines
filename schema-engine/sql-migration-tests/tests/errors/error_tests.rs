@@ -1,3 +1,4 @@
+use connection_string::JdbcString;
 use indoc::{formatdoc, indoc};
 use pretty_assertions::assert_eq;
 use quaint::prelude::Insert;
@@ -7,6 +8,7 @@ use schema_core::{
 };
 use serde_json::json;
 use sql_migration_tests::test_api::*;
+use std::str::FromStr;
 use url::Url;
 
 pub(crate) async fn connection_error(schema: String) -> ConnectorError {
@@ -47,7 +49,7 @@ fn authentication_failure_must_return_a_known_error_on_postgres(api: TestApi) {
     let user = db_url.username();
     let host = db_url.host().unwrap().to_string();
 
-    let json_error = serde_json::to_value(&error.to_user_facing()).unwrap();
+    let json_error = serde_json::to_value(error.to_user_facing()).unwrap();
     let expected = json!({
         "is_panic": false,
         "message": format!("Authentication failed against database server at `{host}`, the provided database credentials for `postgres` are not valid.\n\nPlease make sure to provide valid database credentials for the database server at `{host}`."),
@@ -81,7 +83,42 @@ fn authentication_failure_must_return_a_known_error_on_mysql(api: TestApi) {
     let user = url.username();
     let host = url.host().unwrap().to_string();
 
-    let json_error = serde_json::to_value(&error.to_user_facing()).unwrap();
+    let json_error = serde_json::to_value(error.to_user_facing()).unwrap();
+    let expected = json!({
+        "is_panic": false,
+        "message": format!("Authentication failed against database server at `{host}`, the provided database credentials for `{user}` are not valid.\n\nPlease make sure to provide valid database credentials for the database server at `{host}`."),
+        "meta": {
+            "database_user": user,
+            "database_host": host,
+        },
+        "error_code": "P1000"
+    });
+
+    assert_eq!(json_error, expected);
+}
+
+#[test_connector(tags(Mssql))]
+fn authentication_failure_must_return_a_known_error_on_mssql(api: TestApi) {
+    let mut url = JdbcString::from_str(&format!("jdbc:{}", api.connection_string())).unwrap();
+    let host = url.server_name().unwrap().to_string();
+    let properties = url.properties_mut();
+    let user = properties.get("user").cloned().unwrap();
+
+    *properties.get_mut("password").unwrap() = "obviously-not-right".to_string();
+
+    let dm = format!(
+        r#"
+            datasource db {{
+              provider = "sqlserver"
+              url      = "{}"
+            }}
+        "#,
+        url.to_string().replace("jdbc:", "")
+    );
+
+    let error = tok(connection_error(dm));
+
+    let json_error = serde_json::to_value(error.to_user_facing()).unwrap();
     let expected = json!({
         "is_panic": false,
         "message": format!("Authentication failed against database server at `{host}`, the provided database credentials for `{user}` are not valid.\n\nPlease make sure to provide valid database credentials for the database server at `{host}`."),
@@ -119,7 +156,7 @@ fn unreachable_database_must_return_a_proper_error_on_mysql(api: TestApi) {
     let port = url.port().unwrap();
     let host = url.host().unwrap().to_string();
 
-    let json_error = serde_json::to_value(&error.to_user_facing()).unwrap();
+    let json_error = serde_json::to_value(error.to_user_facing()).unwrap();
     let expected = json!({
         "is_panic": false,
         "message": format!("Can't reach database server at `{host}:{port}`\n\nPlease make sure your database server is running at `{host}:{port}`."),
@@ -153,7 +190,7 @@ fn unreachable_database_must_return_a_proper_error_on_postgres(api: TestApi) {
     let host = url.host().unwrap().to_string();
     let port = url.port().unwrap();
 
-    let json_error = serde_json::to_value(&error.to_user_facing()).unwrap();
+    let json_error = serde_json::to_value(error.to_user_facing()).unwrap();
     let expected = json!({
         "is_panic": false,
         "message": format!("Can't reach database server at `{host}:{port}`\n\nPlease make sure your database server is running at `{host}:{port}`."),
@@ -185,7 +222,7 @@ fn database_does_not_exist_must_return_a_proper_error(api: TestApi) {
 
     let error = tok(connection_error(dm));
 
-    let json_error = serde_json::to_value(&error.to_user_facing()).unwrap();
+    let json_error = serde_json::to_value(error.to_user_facing()).unwrap();
     let expected = json!({
         "is_panic": false,
         "message": format!("Database `{database_name}` does not exist on the database server at `{database_host}:{database_port}`.", database_name = database_name, database_host = url.host().unwrap(), database_port = url.port().unwrap()),
@@ -214,7 +251,7 @@ fn bad_datasource_url_and_provider_combinations_must_return_a_proper_error(api: 
 
     let error = tok(connection_error(dm));
 
-    let json_error = serde_json::to_value(&error.to_user_facing()).unwrap();
+    let json_error = serde_json::to_value(error.to_user_facing()).unwrap();
 
     let err_message: String = json_error["message"].as_str().unwrap().into();
 
@@ -256,7 +293,7 @@ fn connections_to_system_databases_must_be_rejected(api: TestApi) {
         let name = if name == &"" { "mysql" } else { name };
 
         let error = tok(connection_error(dm));
-        let json_error = serde_json::to_value(&error.to_user_facing()).unwrap();
+        let json_error = serde_json::to_value(error.to_user_facing()).unwrap();
 
         let expected = json!({
             "is_panic": false,
@@ -418,7 +455,7 @@ async fn connection_string_problems_give_a_nice_error() {
             .await
             .unwrap_err();
 
-        let json_error = serde_json::to_value(&error.to_user_facing()).unwrap();
+        let json_error = serde_json::to_value(error.to_user_facing()).unwrap();
 
         let details = match provider.0 {
             "sqlserver" => {
@@ -472,7 +509,7 @@ async fn bad_connection_string_in_datamodel_returns_nice_error() {
         Err(e) => e,
     };
 
-    let json_error = serde_json::to_value(&error.to_user_facing()).unwrap();
+    let json_error = serde_json::to_value(error.to_user_facing()).unwrap();
 
     let expected_json_error = json!({
         "is_panic": false,

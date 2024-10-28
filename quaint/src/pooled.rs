@@ -274,7 +274,7 @@ impl Builder {
     /// pool.
     ///
     /// - Defaults to `false`, meaning connections are never tested on
-    /// `check_out`.
+    ///   `check_out`.
     ///
     /// [`check_out`]: struct.Quaint.html#method.check_out
     pub fn test_on_check_out(&mut self, test_on_check_out: bool) {
@@ -307,8 +307,10 @@ impl Builder {
     /// - Defaults to `PostgresFlavour::Unknown`.
     #[cfg(feature = "postgresql-native")]
     pub fn set_postgres_flavour(&mut self, flavour: crate::connector::PostgresFlavour) {
-        use crate::connector::NativeConnectionInfo;
-        if let ConnectionInfo::Native(NativeConnectionInfo::Postgres(ref mut url)) = self.connection_info {
+        use crate::connector::{NativeConnectionInfo, PostgresUrl};
+        if let ConnectionInfo::Native(NativeConnectionInfo::Postgres(PostgresUrl::Native(ref mut url))) =
+            self.connection_info
+        {
             url.set_flavour(flavour);
         }
 
@@ -415,7 +417,7 @@ impl Quaint {
             }
             #[cfg(feature = "postgresql")]
             s if s.starts_with("postgres") || s.starts_with("postgresql") => {
-                let url = crate::connector::PostgresUrl::new(url::Url::parse(s)?)?;
+                let url = crate::connector::PostgresNativeUrl::new(url::Url::parse(s)?)?;
                 let connection_limit = url.connection_limit();
                 let pool_timeout = url.pool_timeout();
                 let max_connection_lifetime = url.max_connection_lifetime();

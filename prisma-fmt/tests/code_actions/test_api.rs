@@ -1,6 +1,7 @@
 use lsp_types::{Diagnostic, DiagnosticSeverity};
 use once_cell::sync::Lazy;
-use prisma_fmt::offset_to_position;
+
+use prisma_fmt::offsets::span_to_range;
 use psl::{diagnostics::Span, SourceFile};
 use std::{fmt::Write as _, io::Write as _, path::PathBuf};
 
@@ -58,10 +59,7 @@ fn create_diagnostic(severity: DiagnosticSeverity, message: &str, span: Span, so
     Diagnostic {
         severity: Some(severity),
         message: message.to_owned(),
-        range: lsp_types::Range {
-            start: offset_to_position(span.start, source),
-            end: offset_to_position(span.end, source),
-        },
+        range: span_to_range(span, source),
         ..Default::default()
     }
 }
@@ -92,10 +90,7 @@ pub(crate) fn test_scenario(scenario_name: &str) {
             .as_str()
     };
 
-    let diagnostics = match parse_schema_diagnostics(&schema_files, initiating_file_name) {
-        Some(diagnostics) => diagnostics,
-        None => Vec::new(),
-    };
+    let diagnostics = parse_schema_diagnostics(&schema_files, initiating_file_name).unwrap_or_default();
 
     path.clear();
     write!(path, "{SCENARIOS_PATH}/{scenario_name}/result.json").unwrap();
