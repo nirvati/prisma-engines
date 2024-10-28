@@ -16,6 +16,7 @@ pub(super) fn render<'a>(
     let mut output = render::Configuration::default();
     let mut datasource = render::configuration::Datasource::from_psl(prev_ds, force_namespaces);
 
+    #[cfg(feature = "postgresql-native")]
     if prev_ds.active_connector.is_provider("postgres") {
         super::postgres::add_extensions(&mut datasource, schema, &previous_schema.configuration);
     }

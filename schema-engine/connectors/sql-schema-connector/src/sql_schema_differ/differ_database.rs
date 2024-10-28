@@ -1,8 +1,9 @@
 use super::{column, enums::EnumDiffer, table::TableDiffer};
 use crate::{flavour::SqlFlavour, migration_pair::MigrationPair, SqlDatabaseSchema};
+#[cfg(feature = "postgresql-native")]
+use sql_schema_describer::postgres::{ExtensionId, ExtensionWalker, PostgresSchemaExt};
 use indexmap::IndexMap;
 use sql_schema_describer::{
-    postgres::{ExtensionId, ExtensionWalker, PostgresSchemaExt},
     walkers::{EnumWalker, TableColumnWalker, TableWalker},
     NamespaceId, NamespaceWalker, TableColumnId, TableId,
 };
@@ -28,6 +29,7 @@ pub(crate) struct DifferDatabase<'a> {
     /// (table_idx, column_idx) -> ColumnChanges
     column_changes: HashMap<MigrationPair<TableColumnId>, column::ColumnChanges>,
     /// Postgres extension name -> extension indexes.
+    #[cfg(feature = "postgresql-native")]
     pub(super) extensions: HashMap<&'a str, MigrationPair<Option<ExtensionId>>>,
     /// Tables that will need to be completely redefined (dropped and recreated) for the migration
     /// to succeed. It needs to be crate public because it is set from the flavour.
@@ -52,6 +54,7 @@ impl<'a> DifferDatabase<'a> {
             tables: IndexMap::with_capacity(table_count_lb),
             columns: BTreeMap::new(),
             column_changes: Default::default(),
+            #[cfg(feature = "postgresql-native")]
             extensions: Default::default(),
             tables_to_redefine: Default::default(),
         };
@@ -275,6 +278,7 @@ impl<'a> DifferDatabase<'a> {
     }
 
     /// Extensions not present in the previous schema.
+    #[cfg(feature = "postgresql-native")]
     pub(crate) fn created_extensions(&self) -> impl Iterator<Item = ExtensionId> + '_ {
         self.extensions
             .values()
@@ -283,6 +287,7 @@ impl<'a> DifferDatabase<'a> {
     }
 
     /// Non-relocatable extensions present in both schemas with changed values.
+    #[cfg(feature = "postgresql-native")]
     pub(crate) fn non_relocatable_extension_pairs<'db>(
         &'db self,
     ) -> impl Iterator<Item = MigrationPair<ExtensionWalker<'a>>> + 'db {
@@ -298,6 +303,7 @@ impl<'a> DifferDatabase<'a> {
     }
 
     /// Relocatable extensions present in both schemas with changed values.
+    #[cfg(feature = "postgresql-native")]
     pub(crate) fn relocatable_extension_pairs<'db>(
         &'db self,
     ) -> impl Iterator<Item = MigrationPair<ExtensionWalker<'a>>> + 'db {
@@ -320,17 +326,20 @@ impl<'a> DifferDatabase<'a> {
         self.schemas.next.describer_schema.enum_walkers()
     }
 
+    #[cfg(feature = "postgresql-native")]
     fn previous_extensions(&self) -> impl Iterator<Item = ExtensionWalker<'a>> {
         let conn_data: &PostgresSchemaExt = self.schemas.previous.describer_schema.downcast_connector_data();
         conn_data.extension_walkers()
     }
 
+    #[cfg(feature = "postgresql-native")]
     fn next_extensions(&self) -> impl Iterator<Item = ExtensionWalker<'a>> {
         let conn_data: &PostgresSchemaExt = self.schemas.next.describer_schema.downcast_connector_data();
         conn_data.extension_walkers()
     }
 }
 
+#[cfg(feature = "postgresql-native")]
 pub(crate) fn extensions_match(previous: ExtensionWalker<'_>, next: ExtensionWalker<'_>) -> bool {
     let names_match = previous.name() == next.name();
 

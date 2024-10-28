@@ -36,6 +36,7 @@ pub struct SslParams {
 #[derive(Debug, Clone, Copy)]
 pub enum PostgresFlavour {
     Postgres,
+    #[cfg(feature = "cockroachdb")]
     Cockroach,
     Unknown,
 }
@@ -51,6 +52,7 @@ impl PostgresFlavour {
     /// Returns `true` if the postgres flavour is [`Cockroach`].
     ///
     /// [`Cockroach`]: PostgresFlavour::Cockroach
+    #[cfg(feature = "cockroachdb")]
     pub(crate) fn is_cockroach(&self) -> bool {
         matches!(self, Self::Cockroach)
     }

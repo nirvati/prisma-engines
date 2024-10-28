@@ -34,6 +34,7 @@ pub fn uuid_to_bin() -> Expression<'static> {
 /// # Ok(())
 /// # }
 /// ```
+#[cfg(feature = "mysql")]
 pub fn uuid_to_bin_swapped() -> Expression<'static> {
     let func = Function {
         typ_: FunctionType::UuidToBinSwapped,

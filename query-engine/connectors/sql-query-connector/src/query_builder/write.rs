@@ -31,10 +31,12 @@ pub(crate) fn create_record(
             insert.value(db_name.to_owned(), field.value(value, ctx))
         });
 
-    Insert::from(insert)
-        .returning(selected_fields.as_columns(ctx).map(|c| c.set_is_selected(true)))
-        .append_trace(&Span::current())
-        .add_trace_id(ctx.trace_id)
+    let insert = Insert::from(insert);
+
+    #[cfg(any(feature = "postgresql", feature = "mssql", feature = "sqlite"))]
+    let insert = insert.returning(selected_fields.as_columns(ctx).map(|c| c.set_is_selected(true)));
+
+    insert.append_trace(&Span::current()).add_trace_id(ctx.trace_id)
 }
 
 /// `INSERT` new records into the database based on the given write arguments,
@@ -178,7 +180,12 @@ pub(crate) fn build_update_and_set_query(
     let query = query.append_trace(&Span::current()).add_trace_id(ctx.trace_id);
 
     let query = if let Some(selected_fields) = selected_fields {
-        query.returning(selected_fields.as_columns(ctx).map(|c| c.set_is_selected(true)))
+        #[cfg(any(feature = "postgresql", feature = "sqlite"))]
+        {
+            query.returning(selected_fields.as_columns(ctx).map(|c| c.set_is_selected(true)))
+        }
+        #[cfg(not(any(feature = "postgresql", feature = "sqlite")))]
+        query
     } else {
         query
     };

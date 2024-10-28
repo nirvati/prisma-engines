@@ -48,10 +48,13 @@ impl OrderByBuilder {
                     self.build_order_aggr_scalar(order_by, needs_reversed_order, ctx)
                 }
                 OrderBy::ToManyAggregation(order_by) => self.build_order_aggr_rel(order_by, needs_reversed_order, ctx),
+                #[cfg(any(feature = "postgresql", feature = "mysql"))]
                 OrderBy::Relevance(order_by) => {
                     reachable_only_with_capability!(ConnectorCapability::FullTextSearch);
                     self.build_order_relevance(order_by, needs_reversed_order, ctx)
                 }
+                #[cfg(not(any(feature = "postgresql", feature = "mysql")))]
+                _ => unreachable!("Feature not enabled that should be enabled!"),
             })
             .collect_vec()
     }
@@ -77,6 +80,7 @@ impl OrderByBuilder {
         }
     }
 
+    #[cfg(any(feature = "postgresql", feature = "mysql"))]
     fn build_order_relevance(
         &mut self,
         order_by: &OrderByRelevance,

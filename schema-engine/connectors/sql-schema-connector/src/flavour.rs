@@ -2,14 +2,22 @@
 //! in order to avoid cluttering the connector with conditionals. This is a private implementation
 //! detail of the SQL connector.
 
+#[cfg(feature = "mssql-native")]
 mod mssql;
+#[cfg(feature = "mysql-native")]
 mod mysql;
+#[cfg(feature = "postgresql-native")]
 mod postgres;
+#[cfg(feature = "sqlite-native")]
 mod sqlite;
 
+#[cfg(feature = "mssql-native")]
 pub(crate) use mssql::MssqlFlavour;
+#[cfg(feature = "mysql-native")]
 pub(crate) use mysql::MysqlFlavour;
+#[cfg(feature = "postgresql-native")]
 pub(crate) use postgres::PostgresFlavour;
+#[cfg(feature = "sqlite-native")]
 pub(crate) use sqlite::SqliteFlavour;
 
 use crate::{

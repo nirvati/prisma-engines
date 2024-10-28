@@ -33,7 +33,7 @@ pub struct Enum {
     /// enum Foo { ... }
     ///      ^^^
     /// ```
-    pub(crate) name: Identifier,
+    pub name: Identifier,
     /// The values of the enum.
     ///
     /// ```ignore

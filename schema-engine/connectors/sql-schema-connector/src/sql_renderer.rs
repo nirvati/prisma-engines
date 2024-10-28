@@ -9,9 +9,13 @@
 //!   statements, this is done later.
 
 mod common;
+#[cfg(feature = "mssql-native")]
 mod mssql_renderer;
+#[cfg(feature = "mysql-native")]
 mod mysql_renderer;
+#[cfg(feature = "postgresql-native")]
 mod postgres_renderer;
+#[cfg(feature = "sqlite-native")]
 mod sqlite_renderer;
 
 pub(crate) use common::IteratorJoin;
@@ -19,9 +23,7 @@ pub(crate) use common::IteratorJoin;
 use self::common::{Quoted, QuotedWithPrefix};
 use crate::{
     migration_pair::MigrationPair,
-    sql_migration::{
-        AlterEnum, AlterExtension, AlterTable, CreateExtension, DropExtension, RedefineTable, SequenceChanges,
-    },
+    sql_migration::{self, AlterEnum, AlterTable, RedefineTable, SequenceChanges},
 };
 use sql_schema_describer::{
     self as sql,
@@ -117,15 +119,22 @@ pub(crate) trait SqlRenderer {
         unreachable!()
     }
 
-    fn render_create_extension(&self, _create: &CreateExtension, _schema: &SqlSchema) -> Vec<String> {
+    #[cfg(feature = "postgresql-native")]
+    fn render_create_extension(&self, _create: &sql_migration::CreateExtension, _schema: &SqlSchema) -> Vec<String> {
         unreachable!("render_create_extension")
     }
 
-    fn render_alter_extension(&self, _alter: &AlterExtension, _schemas: MigrationPair<&SqlSchema>) -> Vec<String> {
+    #[cfg(feature = "postgresql-native")]
+    fn render_alter_extension(
+        &self,
+        _alter: &sql_migration::AlterExtension,
+        _schemas: MigrationPair<&SqlSchema>,
+    ) -> Vec<String> {
         unreachable!("render_alter_extension")
     }
 
-    fn render_drop_extension(&self, _drop: &DropExtension, _schema: &SqlSchema) -> Vec<String> {
+    #[cfg(feature = "postgresql-native")]
+    fn render_drop_extension(&self, _drop: &sql_migration::DropExtension, _schema: &SqlSchema) -> Vec<String> {
         unreachable!("render_drop_extension")
     }
 }

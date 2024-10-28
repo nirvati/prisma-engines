@@ -3,6 +3,12 @@ edition = "2021"
 name = "sql-schema-describer"
 version = "0.1.0"
 
+[features]
+mssql = ["quaint/mssql-native"]
+mysql = ["quaint/mysql-native"]
+postgresql = ["quaint/postgresql-native"]
+sqlite = ["quaint/sqlite-native"]
+
 [dependencies]
 prisma-value = { path = "../../libs/prisma-value" }
 psl = { workspace = true, features = ["all"] }
@@ -20,7 +26,6 @@ tracing.workspace = true
 tracing-error = "0.2"
 tracing-futures = "0.2"
 quaint = { workspace = true, features = [
-    "all-native",
     "pooled",
     "expose-drivers",
     "fmt-sql",

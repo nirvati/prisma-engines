@@ -5,9 +5,13 @@ use sql_schema_describer::{
     TableColumnId,
 };
 
+#[cfg(feature = "mssql-native")]
 mod mssql;
+#[cfg(feature = "mysql-native")]
 mod mysql;
+#[cfg(feature = "postgresql-native")]
 mod postgres;
+#[cfg(feature = "sqlite-native")]
 mod sqlite;
 
 /// Trait to specialize SQL schema diffing (resulting in migration steps) by SQL backend.

@@ -11,6 +11,7 @@ pub mod schema_engine;
 
 use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
+use indoc::formatdoc;
 
 pub use panic_hook::set_panic_hook;
 
@@ -215,4 +216,15 @@ impl From<KnownError> for Error {
             batch_request_idx: None,
         }
     }
+}
+
+pub fn invalid_connection_string_description(error_details: &str) -> String {
+    let docs = r#"https://www.prisma.io/docs/reference/database-reference/connection-urls"#;
+
+    let details = formatdoc! {r#"
+            {} in database URL. Please refer to the documentation in {} for constructing a correct
+            connection string. In some cases, certain characters must be escaped. Please
+            check the string for any illegal characters."#, error_details, docs};
+
+    details.replace('\n', " ")
 }

@@ -2,7 +2,7 @@ use crate::{
     column_metadata,
     filter::FilterBuilder,
     model_extensions::AsColumns,
-    query_builder::write::{build_update_and_set_query, create_record},
+    query_builder::{self, write::build_update_and_set_query},
     row::ToSqlRow,
     Context, Queryable,
 };
@@ -25,7 +25,7 @@ pub(crate) async fn native_upsert(
     let update =
         build_update_and_set_query(upsert.model(), upsert.update().clone(), None, ctx).so_that(where_condition);
 
-    let insert = create_record(upsert.model(), upsert.create().clone(), &selected_fields, ctx);
+    let insert = query_builder::write::create_record(upsert.model(), upsert.create().clone(), &selected_fields, ctx);
 
     let constraints: Vec<_> = upsert.unique_constraints().as_columns(ctx).collect();
     let query: Query = insert.on_conflict(OnConflict::Update(update, constraints)).into();

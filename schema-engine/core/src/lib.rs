@@ -16,17 +16,19 @@ mod rpc;
 mod state;
 mod timings;
 
-pub use self::{api::GenericApi, core_error::*, rpc::rpc_api, timings::TimingsLayer};
+pub use self::{api::GenericApi, core_error::*, rpc::rpc_api, state::EngineState, timings::TimingsLayer};
 use json_rpc::types::{SchemaContainer, SchemasContainer, SchemasWithConfigDir};
 pub use schema_connector;
 
 use enumflags2::BitFlags;
+#[cfg(feature = "mongodb")]
 use mongodb_schema_connector::MongoDbSchemaConnector;
 use psl::{
     builtin_connectors::*, datamodel_connector::Flavour, parser_database::SourceFile, Datasource, PreviewFeature,
     ValidatedSchema,
 };
 use schema_connector::ConnectorParams;
+#[cfg(feature = "sql")]
 use sql_schema_connector::SqlSchemaConnector;
 use std::{env, path::Path};
 use user_facing_errors::common::InvalidConnectionString;
@@ -41,6 +43,7 @@ fn connector_for_connection_string(
     preview_features: BitFlags<PreviewFeature>,
 ) -> CoreResult<Box<dyn schema_connector::SchemaConnector>> {
     match connection_string.split(':').next() {
+        #[cfg(feature = "postgresql")]
         Some("postgres") | Some("postgresql") | Some("prisma+postgres") => {
             let params = ConnectorParams {
                 connection_string,
@@ -51,6 +54,7 @@ fn connector_for_connection_string(
             connector.set_params(params)?;
             Ok(Box::new(connector))
         }
+        #[cfg(feature = "sqlite")]
         Some("file") => {
             let params = ConnectorParams {
                 connection_string,
@@ -61,6 +65,7 @@ fn connector_for_connection_string(
             connector.set_params(params)?;
             Ok(Box::new(connector))
         }
+        #[cfg(feature = "mysql")]
         Some("mysql") => {
             let params = ConnectorParams {
                 connection_string,
@@ -71,6 +76,7 @@ fn connector_for_connection_string(
             connector.set_params(params)?;
             Ok(Box::new(connector))
         }
+        #[cfg(feature = "mssql")]
         Some("sqlserver") => {
             let params = ConnectorParams {
                 connection_string,
@@ -81,6 +87,7 @@ fn connector_for_connection_string(
             connector.set_params(params)?;
             Ok(Box::new(connector))
         }
+        #[cfg(feature = "mongodb")]
         Some("mongodb+srv") | Some("mongodb") => {
             let params = ConnectorParams {
                 connection_string,
@@ -150,16 +157,23 @@ fn schema_to_connector(
 fn connector_for_provider(provider: &str) -> CoreResult<Box<dyn schema_connector::SchemaConnector>> {
     if let Some(connector) = BUILTIN_CONNECTORS.iter().find(|c| c.is_provider(provider)) {
         match connector.flavour() {
+            #[cfg(feature = "postgresql")]
             Flavour::Cockroach => Ok(Box::new(SqlSchemaConnector::new_cockroach())),
+            #[cfg(feature = "mongodb")]
             Flavour::Mongo => Ok(Box::new(MongoDbSchemaConnector::new(ConnectorParams {
                 connection_string: String::new(),
                 preview_features: Default::default(),
                 shadow_database_connection_string: None,
             }))),
+            #[cfg(feature = "mssql")]
             Flavour::Sqlserver => Ok(Box::new(SqlSchemaConnector::new_mssql())),
+            #[cfg(feature = "msyql")]
             Flavour::Mysql => Ok(Box::new(SqlSchemaConnector::new_mysql())),
+            #[cfg(feature = "postgresql")]
             Flavour::Postgres => Ok(Box::new(SqlSchemaConnector::new_postgres())),
+            #[cfg(feature = "sqlite")]
             Flavour::Sqlite => Ok(Box::new(SqlSchemaConnector::new_sqlite())),
+            _ => unreachable!("The feature for this connector is not enabled."),
         }
     } else {
         Err(CoreError::from_msg(format!(

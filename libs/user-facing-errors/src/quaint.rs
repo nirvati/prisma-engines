@@ -1,4 +1,7 @@
+#![allow(unused_variables)]
+
 use crate::{common, query_engine, KnownError};
+#[allow(unused_imports)]
 use indoc::formatdoc;
 use quaint::{error::ErrorKind, prelude::ConnectionInfo};
 
@@ -30,17 +33,6 @@ impl From<quaint::error::DatabaseConstraint> for query_engine::DatabaseConstrain
             quaint::error::DatabaseConstraint::CannotParse => Self::CannotParse,
         }
     }
-}
-
-pub fn invalid_connection_string_description(error_details: &str) -> String {
-    let docs = r#"https://www.prisma.io/docs/reference/database-reference/connection-urls"#;
-
-    let details = formatdoc! {r#"
-            {} in database URL. Please refer to the documentation in {} for constructing a correct
-            connection string. In some cases, certain characters must be escaped. Please
-            check the string for any illegal characters."#, error_details, docs};
-
-    details.replace('\n', " ")
 }
 
 pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -> Option<KnownError> {
@@ -81,12 +73,14 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
         (ErrorKind::DatabaseAccessDenied { .. }, ConnectionInfo::External(_)) => default_value,
         #[cfg(any(feature = "mysql-native", feature = "postgresql-native"))]
         (ErrorKind::DatabaseAccessDenied { .. }, _) => match connection_info {
+            #[cfg(feature = "postgresql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Postgres(url)) => {
                 Some(KnownError::new(common::DatabaseAccessDenied {
                     database_user: url.username().into_owned(),
                     database_name: format!("{}.{}", url.dbname(), url.schema()),
                 }))
             }
+            #[cfg(feature = "mysql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mysql(url)) => {
                 Some(KnownError::new(common::DatabaseAccessDenied {
                     database_user: url.username().into_owned(),
@@ -121,18 +115,21 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
         (ErrorKind::AuthenticationFailed { .. }, ConnectionInfo::External(_)) => default_value,
         #[cfg(any(feature = "mysql-native", feature = "postgresql-native", feature = "mssql-native"))]
         (ErrorKind::AuthenticationFailed { user }, _) => match connection_info {
+            #[cfg(feature = "postgresql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Postgres(url)) => {
                 Some(KnownError::new(common::IncorrectDatabaseCredentials {
                     database_user: format!("{user}"),
                     database_host: url.host().to_owned(),
                 }))
             }
+            #[cfg(feature = "mysql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mysql(url)) => {
                 Some(KnownError::new(common::IncorrectDatabaseCredentials {
                     database_user: format!("{user}"),
                     database_host: url.host().to_owned(),
                 }))
             }
+            #[cfg(feature = "mssql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mssql(url)) => {
                 Some(KnownError::new(common::IncorrectDatabaseCredentials {
                     database_user: format!("{user}"),
@@ -145,6 +142,7 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
         (ErrorKind::SocketTimeout { .. }, ConnectionInfo::External(_)) => default_value,
         #[cfg(any(feature = "mssql-native", feature = "mysql-native", feature = "postgresql-native", feature = "sqlite-native"))]
         (ErrorKind::SocketTimeout, _) => match connection_info {
+            #[cfg(feature = "postgresql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Postgres(url)) => {
                 let time = match url.socket_timeout() {
                     Some(dur) => format!("{}s", dur.as_secs()),
@@ -157,6 +155,7 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
                         .into(),
                 }))
             }
+            #[cfg(feature = "mysql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mysql(url)) => {
                 let time = match url.socket_timeout() {
                     Some(dur) => format!("{}s", dur.as_secs()),
@@ -169,6 +168,7 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
                         .into(),
                 }))
             }
+            #[cfg(feature = "mssql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mssql(url)) => {
                 let time = match url.socket_timeout() {
                     Some(dur) => format!("{}s", dur.as_secs()),
@@ -181,6 +181,7 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
                         .into(),
                 }))
             }
+            #[cfg(feature = "sqlite-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Sqlite { file_path, db_name: _ }) => {
                 Some(KnownError::new(common::DatabaseOperationTimeout {
                     time: "N/A".into(),
@@ -201,17 +202,19 @@ pub fn render_quaint_error(kind: &ErrorKind, connection_info: &ConnectionInfo) -
                 model: format!("{model}"),
                 kind: common::ModelKind::Table,
             })),
-            #[cfg(feature = "postgresql-native")]
+            #[cfg(feature = "mysql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mysql(_)) => Some(KnownError::new(common::InvalidModel {
                 model: format!("{model}"),
                 kind: common::ModelKind::Table,
             })),
+            #[cfg(feature = "sqlite-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Sqlite { .. }) => {
                 Some(KnownError::new(common::InvalidModel {
                     model: format!("{model}"),
                     kind: common::ModelKind::Table,
                 }))
             }
+            #[cfg(feature = "mssql-native")]
             ConnectionInfo::Native(NativeConnectionInfo::Mssql(_)) => Some(KnownError::new(common::InvalidModel {
                 model: format!("{model}"),
                 kind: common::ModelKind::Table,

@@ -30,6 +30,7 @@ pub enum NativeConnectionInfo {
     InMemorySqlite { db_name: String },
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 impl NativeConnectionInfo {
     #[allow(unused)]
     pub fn set_version(&mut self, version: Option<String>) {

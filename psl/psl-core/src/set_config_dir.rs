@@ -5,7 +5,9 @@ use crate::datamodel_connector::Flavour;
 
 pub fn set_config_dir<'a>(flavour: Flavour, config_dir: &std::path::Path, url: &'a str) -> Cow<'a, str> {
     match flavour {
+        #[cfg(feature = "mssql")]
         Flavour::Sqlserver => set_config_dir_mssql(config_dir, url),
+        #[cfg(feature = "sqlite")]
         Flavour::Sqlite => set_config_dir_sqlite(config_dir, url),
         _ => set_config_dir_default(config_dir, url),
     }
@@ -53,6 +55,7 @@ fn set_config_dir_default<'a>(config_dir: &std::path::Path, url: &'a str) -> Cow
     url.to_string().into()
 }
 
+#[cfg(feature = "mssql")]
 pub fn set_config_dir_mssql<'a>(config_dir: &std::path::Path, url: &'a str) -> Cow<'a, str> {
     let mut jdbc: JdbcString = match format!("jdbc:{url}").parse() {
         Ok(jdbc) => jdbc,
@@ -82,6 +85,7 @@ pub fn set_config_dir_mssql<'a>(config_dir: &std::path::Path, url: &'a str) -> C
     Cow::Owned(final_connection_string)
 }
 
+#[cfg(feature = "sqlite")]
 pub fn set_config_dir_sqlite<'a>(config_dir: &std::path::Path, url: &'a str) -> Cow<'a, str> {
     let set_root = |path: &str| {
         let path = std::path::Path::new(path);

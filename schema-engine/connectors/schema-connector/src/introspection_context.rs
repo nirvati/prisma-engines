@@ -2,6 +2,8 @@ use std::path::{Path, PathBuf};
 
 use enumflags2::BitFlags;
 use psl::{Datasource, PreviewFeature};
+
+#[cfg(feature = "quaint")]
 use quaint::prelude::SqlFamily;
 
 const INTROSPECTION_FILE_NAME: &str = "introspected.prisma";
@@ -107,12 +109,18 @@ impl IntrospectionContext {
     }
 
     /// The SQL family we're using currently.
+    #[cfg(feature = "quaint")]
     pub fn sql_family(&self) -> SqlFamily {
         match self.datasource().active_provider {
+            #[cfg(feature = "postgresql")]
             "postgresql" => SqlFamily::Postgres,
+            #[cfg(feature = "postgresql")]
             "cockroachdb" => SqlFamily::Postgres,
+            #[cfg(feature = "sqlite")]
             "sqlite" => SqlFamily::Sqlite,
+            #[cfg(feature = "mssql")]
             "sqlserver" => SqlFamily::Mssql,
+            #[cfg(feature = "mysql")]
             "mysql" => SqlFamily::Mysql,
             name => unreachable!("The name `{}` for the datamodel connector is not known", name),
         }

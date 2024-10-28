@@ -11,7 +11,7 @@ use itertools::Itertools;
 use quaint::ast::Insert;
 use quaint::{
     error::ErrorKind,
-    prelude::{native_uuid, uuid_to_bin, uuid_to_bin_swapped, Aliasable, Select, SqlFamily},
+    prelude::{Aliasable, Select, SqlFamily},
 };
 use query_structure::*;
 use std::borrow::Cow;
@@ -41,12 +41,15 @@ macro_rules! trace {
     };
 }
 
+#[cfg(feature = "mysql")]
 async fn generate_id(
     conn: &dyn Queryable,
     id_field: &FieldSelection,
     args: &WriteArgs,
     ctx: &Context<'_>,
 ) -> crate::Result<Option<SelectionResult>> {
+    use quaint::prelude::{native_uuid, uuid_to_bin, uuid_to_bin_swapped};
+
     // Go through all the values and generate a select statement with the correct MySQL function
     let (id_select, need_select) = id_field
         .selections()
@@ -84,6 +87,7 @@ async fn generate_id(
 
 /// Create a single record to the database defined in `conn`, resulting into a
 /// `RecordProjection` as an identifier pointing to the just-created record.
+// #[cfg(any(feature = "postgresql", feature = "mssql", feature = "sqlite"))]
 pub(crate) async fn create_record(
     conn: &dyn Queryable,
     sql_family: &SqlFamily,
@@ -94,6 +98,7 @@ pub(crate) async fn create_record(
 ) -> crate::Result<SingleRecord> {
     let id_field: FieldSelection = model.primary_identifier();
 
+    #[cfg(feature = "mysql")]
     let returned_id = if sql_family.is_mysql() {
         generate_id(conn, &id_field, &args, ctx)
             .await?
@@ -101,7 +106,11 @@ pub(crate) async fn create_record(
     } else {
         args.as_selection_result(ModelProjection::from(id_field))
     };
+    
+    #[cfg(not(feature = "mysql"))]
+    let returned_id = args.as_selection_result(ModelProjection::from(id_field));
 
+    #[cfg(feature = "mysql")]
     let args = match returned_id {
         Some(ref pk) if sql_family.is_mysql() => {
             for (field, value) in pk.pairs.iter() {
