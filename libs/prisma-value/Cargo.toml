@@ -4,7 +4,7 @@ name = "prisma-value"
 version = "0.1.0"
 
 [dependencies]
-base64 = "0.13"
+base64 = "0.22"
 chrono.workspace = true
 once_cell = "1.3"
 regex.workspace = true

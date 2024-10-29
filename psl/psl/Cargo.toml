@@ -16,7 +16,7 @@ all = ["postgresql", "sqlite", "mysql", "cockroachdb", "mssql", "mongodb"]
 psl-core = { path = "../psl-core" }
 
 [dev-dependencies]
-base64 = "0.13.0"
+base64 = "0.22"
 dissimilar = "1.0.4"
 expect-test = "1.1.0"
 indoc.workspace = true

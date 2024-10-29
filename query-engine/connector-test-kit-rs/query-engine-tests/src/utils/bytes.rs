@@ -1,5 +1,5 @@
-use base64::encode;
+use base64::Engine;
 
 pub fn string_to_base64(str: &str) -> String {
-    encode(str.as_bytes())
+    base64::engine::general_purpose::STANDARD.encode(str.as_bytes())
 }

@@ -3,6 +3,7 @@ use schema_connector::ConnectorError;
 use schema_core::json_rpc::types::{DatasourceParam, UrlContainer};
 use structopt::StructOpt;
 use user_facing_errors::common::SchemaParserError;
+use base64::Engine;
 
 #[derive(Debug, StructOpt)]
 pub(crate) struct Cli {
@@ -65,7 +66,7 @@ enum CliCommand {
 }
 
 fn parse_base64_string(s: &str) -> Result<String, ConnectorError> {
-    match base64::decode(s) {
+    match base64::engine::general_purpose::STANDARD.decode(s) {
         Ok(bytes) => match String::from_utf8(bytes) {
             Ok(s) => Ok(s),
             Err(e) => Err(ConnectorError::user_facing(SchemaParserError {

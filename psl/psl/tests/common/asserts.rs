@@ -7,6 +7,7 @@ use psl::parser_database::{walkers, IndexAlgorithm, ModelId, OperatorClass, Refe
 use psl::schema_ast::ast::WithDocumentation;
 use psl::schema_ast::ast::{self, FieldArity};
 use psl::{Diagnostics, StringFromEnvVar};
+use base64::Engine;
 
 pub(crate) trait DatamodelAssert<'a> {
     fn assert_has_model(&'a self, name: &str) -> walkers::ModelWalker<'a>;
@@ -606,7 +607,7 @@ impl DefaultValueAssert for ast::Expression {
     #[track_caller]
     fn assert_bytes(&self, expected: &[u8]) -> &Self {
         match self {
-            ast::Expression::StringValue(actual, _) => assert_eq!(base64::decode(actual).unwrap(), expected),
+            ast::Expression::StringValue(actual, _) => assert_eq!(base64::engine::general_purpose::STANDARD.decode(actual).unwrap(), expected),
             _ => panic!("Not a bytes value"),
         }
 

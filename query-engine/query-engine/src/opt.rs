@@ -4,6 +4,7 @@ use query_core::protocol::EngineProtocol;
 use serde::Deserialize;
 use std::{env, ffi::OsStr, fs::File, io::Read, sync::Arc};
 use structopt::StructOpt;
+use base64::Engine;
 
 #[derive(Debug, StructOpt, Clone)]
 pub enum Subcommand {
@@ -241,7 +242,7 @@ impl PrismaOpt {
 }
 
 fn parse_base64_string(s: &str) -> PrismaResult<String> {
-    match base64::decode(s) {
+    match base64::engine::general_purpose::STANDARD.decode(s) {
         Ok(bytes) => String::from_utf8(bytes).map_err(|e| {
             trace!("Error decoding {} from Base64 (invalid UTF-8): {:?}", s, e);
 

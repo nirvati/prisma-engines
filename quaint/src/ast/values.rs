@@ -4,6 +4,7 @@ use crate::error::{Error, ErrorKind};
 use bigdecimal::{BigDecimal, FromPrimitive, ToPrimitive};
 use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
 
+use base64::Engine;
 use serde_json::{Number, Value as JsonValue};
 use std::fmt::Display;
 use std::{
@@ -651,7 +652,7 @@ impl<'a> From<ValueType<'a>> for serde_json::Value {
                 None => serde_json::Value::Null,
             }),
             ValueType::Text(cow) => cow.map(|cow| serde_json::Value::String(cow.into_owned())),
-            ValueType::Bytes(bytes) => bytes.map(|bytes| serde_json::Value::String(base64::encode(bytes))),
+            ValueType::Bytes(bytes) => bytes.map(|bytes| serde_json::Value::String(base64::engine::general_purpose::STANDARD.encode(bytes))),
             ValueType::Enum(cow, _) => cow.map(|cow| serde_json::Value::String(cow.into_owned())),
             ValueType::EnumArray(values, _) => values.map(|values| {
                 serde_json::Value::Array(

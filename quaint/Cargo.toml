@@ -85,7 +85,7 @@ regex.workspace = true
 enumflags2.workspace = true
 
 either = { version = "1.6" }
-base64 = { version = "0.12.3" }
+base64 = { version = "0.22" }
 chrono.workspace = true
 lru-cache = { version = "0.1", optional = true }
 serde_json.workspace = true

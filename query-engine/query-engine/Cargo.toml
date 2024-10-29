@@ -11,7 +11,7 @@ vendored-openssl = ["sql-connector/vendored-openssl"]
 tokio.workspace = true
 anyhow = "1.0"
 async-trait.workspace = true
-base64 = "0.13"
+base64 = "0.22"
 connection-string.workspace = true
 connector = { path = "../connectors/query-connector", package = "query-connector" }
 enumflags2.workspace = true

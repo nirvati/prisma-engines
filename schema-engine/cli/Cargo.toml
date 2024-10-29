@@ -11,7 +11,7 @@ user-facing-errors = { path = "../../libs/user-facing-errors", features = [
 ] }
 
 backtrace = "0.3.59"
-base64 = "0.13"
+base64 = "0.22"
 jsonrpc-core = "17"
 structopt = "0.3.8"
 serde_json.workspace = true
