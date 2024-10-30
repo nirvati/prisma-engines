@@ -1145,7 +1145,7 @@ dependencies = [
  "base64 0.22.1",
  "expect-test",
  "indoc 2.0.3",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "once_cell",
  "psl",
  "regex",
@@ -1227,7 +1227,7 @@ dependencies = [
  "flate2",
  "indexmap 2.6.0",
  "indoc 2.0.3",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "pretty_assertions",
  "psl",
  "query-structure",
@@ -2208,6 +2208,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2683,7 +2692,7 @@ dependencies = [
  "derive_more",
  "futures",
  "indexmap 2.6.0",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "mongodb",
  "mongodb-client",
  "pretty_assertions",
@@ -2716,7 +2725,7 @@ dependencies = [
  "expect-test",
  "futures",
  "indoc 2.0.3",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "mongodb",
  "mongodb-client",
  "mongodb-schema-describer",
@@ -3690,7 +3699,7 @@ dependencies = [
  "enumflags2",
  "hex",
  "indoc 2.0.3",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "lsp-types",
  "once_cell",
  "parser-database",
@@ -3765,7 +3774,7 @@ dependencies = [
  "getrandom 0.2.11",
  "hex",
  "indoc 0.3.6",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "lru-cache",
  "metrics",
  "mobc",
@@ -3845,7 +3854,7 @@ dependencies = [
  "chrono",
  "futures",
  "indexmap 2.6.0",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "prisma-value",
  "query-structure",
  "serde",
@@ -3869,7 +3878,7 @@ dependencies = [
  "enumflags2",
  "futures",
  "indexmap 2.6.0",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "lru 0.7.8",
  "once_cell",
  "opentelemetry",
@@ -4056,7 +4065,7 @@ dependencies = [
  "futures",
  "indoc 2.0.3",
  "insta",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "once_cell",
  "paste",
  "prisma-value",
@@ -4117,7 +4126,7 @@ dependencies = [
  "chrono",
  "cuid",
  "getrandom 0.2.11",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "nanoid",
  "prisma-value",
  "psl",
@@ -4146,7 +4155,7 @@ dependencies = [
  "indexmap 2.6.0",
  "indoc 2.0.3",
  "insta",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "jsonrpc-core",
  "nom",
  "once_cell",
@@ -4428,7 +4437,7 @@ dependencies = [
  "graphql-parser",
  "indexmap 2.6.0",
  "insta",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "mongodb-query-connector",
  "once_cell",
  "psl",
@@ -5171,7 +5180,7 @@ dependencies = [
  "enumflags2",
  "expect-test",
  "indoc 2.0.3",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "pretty_assertions",
  "psl",
  "quaint",
@@ -5231,7 +5240,7 @@ dependencies = [
  "cuid",
  "expect-test",
  "futures",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "once_cell",
  "opentelemetry",
  "prisma-value",
@@ -6242,7 +6251,7 @@ version = "0.1.0"
 dependencies = [
  "backtrace",
  "indoc 2.0.3",
- "itertools 0.12.0",
+ "itertools 0.13.0",
  "quaint",
  "serde",
  "serde_json",
