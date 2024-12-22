@@ -17,11 +17,10 @@ serde_json.workspace = true
 thiserror = "1.0"
 tokio.workspace = true
 tracing.workspace = true
-tracing-futures = "0.2"
+tracing-futures.workspace = true
 uuid.workspace = true
 indexmap.workspace = true
-query-engine-metrics = { path = "../../metrics" }
-cuid = { git = "https://github.com/prisma/cuid-rust", branch = "wasm32-support" }
+prisma-metrics.path = "../../../libs/metrics"
 derive_more.workspace = true
 
 [dependencies.query-structure]
@@ -36,6 +35,9 @@ path = "../query-connector"
 
 [dependencies.prisma-value]
 path = "../../../libs/prisma-value"
+
+[dependencies.telemetry]
+path = "../../../libs/telemetry"
 
 [dependencies.chrono]
 features = ["serde"]

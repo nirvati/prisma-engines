@@ -1,6 +1,7 @@
 use crate::features::{EnabledFeatures, Feature};
 use crate::{logger::Logger, opt::PrismaOpt};
 use crate::{PrismaError, PrismaResult};
+use prisma_metrics::{MetricRecorder, MetricRegistry};
 use psl::PreviewFeature;
 use query_core::{
     protocol::EngineProtocol,
@@ -8,9 +9,10 @@ use query_core::{
     schema::{self, QuerySchemaRef},
     QueryExecutor,
 };
-use query_engine_metrics::{MetricRecorder, MetricRegistry};
 use request_handlers::{load_executor, ConnectorKind};
 use std::{env, fmt, sync::Arc};
+use telemetry::exporter::{CaptureSettings, CaptureTarget};
+use telemetry::{NextId, RequestId};
 use tracing::Instrument;
 
 /// Prisma request context containing all immutable state of the process.
@@ -26,6 +28,10 @@ pub struct PrismaContext {
     pub(crate) engine_protocol: EngineProtocol,
     /// Enabled features
     pub(crate) enabled_features: EnabledFeatures,
+    /// Logging and tracing facility
+    pub(crate) logger: Logger,
+    /// Artificial request ID used for capturing the spans during startup.
+    pub(crate) boot_request_id: RequestId,
 }
 
 impl fmt::Debug for PrismaContext {
@@ -40,6 +46,8 @@ impl PrismaContext {
         protocol: EngineProtocol,
         enabled_features: EnabledFeatures,
         metrics: Option<MetricRegistry>,
+        logger: Logger,
+        boot_request_id: RequestId,
     ) -> PrismaResult<PrismaContext> {
         let arced_schema = Arc::new(schema);
         let arced_schema_2 = Arc::clone(&arced_schema);
@@ -48,7 +56,10 @@ impl PrismaContext {
             // Construct query schema
             schema::build(arced_schema, enabled_features.contains(Feature::RawQueries))
         });
-        let executor_fut = tokio::spawn(async move {
+
+        let enable_tracing = logger.tracing_config().should_capture();
+
+        let executor_fut = async move {
             let config = &arced_schema_2.configuration;
             let preview_features = config.preview_features();
 
@@ -59,16 +70,31 @@ impl PrismaContext {
                 .ok_or_else(|| PrismaError::ConfigurationError("No valid data source found".into()))?;
 
             let url = datasource.load_url(|key| env::var(key).ok())?;
+
             // Load executor
-            let executor = load_executor(ConnectorKind::Rust { url, datasource }, preview_features).await?;
-            let conn = executor.primary_connector().get_connection().await?;
+            let executor = load_executor(
+                ConnectorKind::Rust { url, datasource },
+                preview_features,
+                enable_tracing,
+            )
+            .await?;
+
+            let connector = executor.primary_connector();
+
+            let conn_span = tracing::info_span!(
+                "prisma:engine:connection",
+                user_facing = true,
+                "db.system" = connector.name(),
+            );
+
+            let conn = connector.get_connection().instrument(conn_span).await?;
             let db_version = conn.version().await;
 
             PrismaResult::<_>::Ok((executor, db_version))
-        });
+        };
 
         let (query_schema, executor_with_db_version) = tokio::join!(query_schema_fut, executor_fut);
-        let (executor, db_version) = executor_with_db_version.unwrap()?;
+        let (executor, db_version) = executor_with_db_version?;
 
         let query_schema = query_schema.unwrap().with_db_version_supports_join_strategy(
             relation_load_strategy::db_version_supports_joins_strategy(db_version)?,
@@ -80,6 +106,8 @@ impl PrismaContext {
             metrics: metrics.unwrap_or_default(),
             engine_protocol: protocol,
             enabled_features,
+            logger,
+            boot_request_id,
         };
 
         Ok(context)
@@ -102,10 +130,8 @@ impl PrismaContext {
     }
 }
 
-pub async fn setup(opts: &PrismaOpt, install_logger: bool) -> PrismaResult<Arc<PrismaContext>> {
-    if install_logger {
-        Logger::new("prisma-engine-http", opts).install().unwrap();
-    }
+pub async fn setup(opts: &PrismaOpt) -> PrismaResult<Arc<PrismaContext>> {
+    let logger = Logger::new(opts).install().expect("failed to install the logger");
 
     let metrics = if opts.enable_metrics || opts.dataproxy_metric_override {
         let metrics = MetricRegistry::new();
@@ -122,7 +148,20 @@ pub async fn setup(opts: &PrismaOpt, install_logger: bool) -> PrismaResult<Arc<P
     let protocol = opts.engine_protocol();
     config.validate_that_one_datasource_is_provided()?;
 
-    let span = tracing::info_span!("prisma:engine:connect");
+    let initial_request_id = RequestId::next();
+
+    if logger.tracing_config().should_capture() {
+        logger
+            .exporter()
+            .start_capturing(initial_request_id, CaptureSettings::new(CaptureTarget::Spans))
+            .await;
+    }
+
+    let span = tracing::info_span!(
+        "prisma:engine:connect",
+        user_facing = true,
+        request_id = initial_request_id.into_u64(),
+    );
 
     let mut features = EnabledFeatures::from(opts);
 
@@ -130,7 +169,7 @@ pub async fn setup(opts: &PrismaOpt, install_logger: bool) -> PrismaResult<Arc<P
         features |= Feature::Metrics
     }
 
-    let cx = PrismaContext::new(datamodel, protocol, features, metrics)
+    let cx = PrismaContext::new(datamodel, protocol, features, metrics, logger, initial_request_id)
         .instrument(span)
         .await?;
 

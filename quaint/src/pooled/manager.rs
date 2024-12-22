@@ -1,16 +1,21 @@
+use std::future::Future;
+
+use async_trait::async_trait;
+use mobc::{Connection as MobcPooled, Manager};
+use prisma_metrics::WithMetricsInstrumentation;
+use tracing_futures::WithSubscriber;
+
 #[cfg(feature = "mssql-native")]
 use crate::connector::MssqlUrl;
 #[cfg(feature = "mysql-native")]
 use crate::connector::MysqlUrl;
 #[cfg(feature = "postgresql-native")]
-use crate::connector::PostgresNativeUrl;
+use crate::connector::{MakeTlsConnectorManager, PostgresNativeUrl};
 use crate::{
     ast,
-    connector::{self, impl_default_TransactionCapable, IsolationLevel, Queryable, Transaction, TransactionCapable},
+    connector::{self, IsolationLevel, Queryable, Transaction, TransactionCapable},
     error::Error,
 };
-use async_trait::async_trait;
-use mobc::{Connection as MobcPooled, Manager};
 
 /// A connection from the pool. Implements
 /// [Queryable](connector/trait.Queryable.html).
@@ -18,7 +23,15 @@ pub struct PooledConnection {
     pub(crate) inner: MobcPooled<QuaintManager>,
 }
 
-impl_default_TransactionCapable!(PooledConnection);
+#[async_trait]
+impl TransactionCapable for PooledConnection {
+    async fn start_transaction<'a>(
+        &'a self,
+        isolation: Option<IsolationLevel>,
+    ) -> crate::Result<Box<dyn Transaction + 'a>> {
+        self.inner.start_transaction(isolation).await
+    }
+}
 
 #[async_trait]
 impl Queryable for PooledConnection {
@@ -85,7 +98,11 @@ pub enum QuaintManager {
     Mysql { url: MysqlUrl },
 
     #[cfg(feature = "postgresql")]
-    Postgres { url: PostgresNativeUrl },
+    Postgres {
+        url: PostgresNativeUrl,
+        tls_manager: MakeTlsConnectorManager,
+        is_tracing_enabled: bool,
+    },
 
     #[cfg(feature = "sqlite")]
     Sqlite { url: String, db_name: String },
@@ -96,7 +113,7 @@ pub enum QuaintManager {
 
 #[async_trait]
 impl Manager for QuaintManager {
-    type Connection = Box<dyn Queryable>;
+    type Connection = Box<dyn TransactionCapable>;
     type Error = Error;
 
     async fn connect(&self) -> crate::Result<Self::Connection> {
@@ -117,9 +134,23 @@ impl Manager for QuaintManager {
             }
 
             #[cfg(feature = "postgresql-native")]
-            QuaintManager::Postgres { url } => {
-                use crate::connector::PostgreSql;
-                Ok(Box::new(PostgreSql::new(url.clone()).await?) as Self::Connection)
+            QuaintManager::Postgres {
+                url,
+                tls_manager,
+                is_tracing_enabled: false,
+            } => {
+                use crate::connector::PostgreSqlWithDefaultCache;
+                Ok(Box::new(PostgreSqlWithDefaultCache::new(url.clone(), tls_manager).await?) as Self::Connection)
+            }
+
+            #[cfg(feature = "postgresql-native")]
+            QuaintManager::Postgres {
+                url,
+                tls_manager,
+                is_tracing_enabled: true,
+            } => {
+                use crate::connector::PostgreSqlWithTracingCache;
+                Ok(Box::new(PostgreSqlWithTracingCache::new(url.clone(), tls_manager).await?) as Self::Connection)
             }
 
             #[cfg(feature = "mssql-native")]
@@ -142,6 +173,14 @@ impl Manager for QuaintManager {
 
     fn validate(&self, conn: &mut Self::Connection) -> bool {
         conn.is_healthy()
+    }
+
+    fn spawn_task<T>(&self, task: T)
+    where
+        T: Future + Send + 'static,
+        T::Output: Send + 'static,
+    {
+        tokio::spawn(task.with_current_subscriber().with_current_recorder());
     }
 }
 

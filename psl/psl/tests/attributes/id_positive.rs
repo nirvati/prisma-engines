@@ -51,6 +51,45 @@ fn should_allow_string_ids_with_cuid() {
 }
 
 #[test]
+fn should_allow_string_ids_with_cuid_version_specified() {
+    let dml = indoc! {r#"
+        model ModelA {
+          id String @id @default(cuid(1))
+        }
+
+        model ModelB {
+          id String @id @default(cuid(2))
+        }
+    "#};
+
+    let schema = psl::parse_schema(dml).unwrap();
+
+    {
+        let model = schema.assert_has_model("ModelA");
+
+        model
+            .assert_has_scalar_field("id")
+            .assert_scalar_type(ScalarType::String)
+            .assert_default_value()
+            .assert_cuid_version(1);
+
+        model.assert_id_on_fields(&["id"]);
+    }
+
+    {
+        let model = schema.assert_has_model("ModelB");
+
+        model
+            .assert_has_scalar_field("id")
+            .assert_scalar_type(ScalarType::String)
+            .assert_default_value()
+            .assert_cuid_version(2);
+
+        model.assert_id_on_fields(&["id"]);
+    }
+}
+
+#[test]
 fn should_allow_string_ids_with_uuid() {
     let dml = indoc! {r#"
         model Model {
@@ -91,7 +130,7 @@ fn should_allow_string_ids_with_uuid_version_specified() {
             .assert_has_scalar_field("id")
             .assert_scalar_type(ScalarType::String)
             .assert_default_value()
-            .assert_uuid();
+            .assert_uuid_version(4);
 
         model.assert_id_on_fields(&["id"]);
     }
@@ -103,10 +142,30 @@ fn should_allow_string_ids_with_uuid_version_specified() {
             .assert_has_scalar_field("id")
             .assert_scalar_type(ScalarType::String)
             .assert_default_value()
-            .assert_uuid();
+            .assert_uuid_version(7);
 
         model.assert_id_on_fields(&["id"]);
     }
+}
+
+#[test]
+fn should_allow_string_ids_with_ulid() {
+    let dml = indoc! {r#"
+        model Model {
+          id String @id @default(ulid())
+        }
+    "#};
+
+    let schema = psl::parse_schema(dml).unwrap();
+    let model = schema.assert_has_model("Model");
+
+    model
+        .assert_has_scalar_field("id")
+        .assert_scalar_type(ScalarType::String)
+        .assert_default_value()
+        .assert_ulid();
+
+    model.assert_id_on_fields(&["id"]);
 }
 
 #[test]
@@ -278,10 +337,10 @@ fn id_accepts_length_arg_on_mysql() {
           firstName  String
           middleName String
           lastName   String
-         
+
           @@id([firstName, middleName(length: 1), lastName])
          }
-     
+
          model Blog {
           title  String @id(length:5)
          }
@@ -309,10 +368,10 @@ fn id_accepts_sort_arg_on_sqlserver() {
           firstName  String
           middleName String
           lastName   String
-         
+
           @@id([firstName, middleName(sort: Desc), lastName])
         }
-     
+
         model Blog {
           title  String @id(sort: Desc)
         }

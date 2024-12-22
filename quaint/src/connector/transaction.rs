@@ -1,13 +1,13 @@
+use std::{fmt, str::FromStr};
+
+use async_trait::async_trait;
+use prisma_metrics::guards::GaugeGuard;
+
 use super::*;
 use crate::{
     ast::*,
     error::{Error, ErrorKind},
 };
-use async_trait::async_trait;
-use metrics::gauge;
-use std::{fmt, str::FromStr};
-
-extern crate metrics as metrics;
 
 #[async_trait]
 pub trait Transaction: Queryable {
@@ -21,12 +21,33 @@ pub trait Transaction: Queryable {
     fn as_queryable(&self) -> &dyn Queryable;
 }
 
+#[cfg(any(
+    feature = "sqlite-native",
+    feature = "mssql-native",
+    feature = "postgresql-native",
+    feature = "mysql-native"
+))]
 pub(crate) struct TransactionOptions {
     /// The isolation level to use.
     pub(crate) isolation_level: Option<IsolationLevel>,
 
     /// Whether or not to put the isolation level `SET` before or after the `BEGIN`.
     pub(crate) isolation_first: bool,
+}
+
+#[cfg(any(
+    feature = "sqlite-native",
+    feature = "mssql-native",
+    feature = "postgresql-native",
+    feature = "mysql-native"
+))]
+impl TransactionOptions {
+    pub fn new(isolation_level: Option<IsolationLevel>, isolation_first: bool) -> Self {
+        Self {
+            isolation_level,
+            isolation_first,
+        }
+    }
 }
 
 /// A default representation of an SQL database transaction. If not commited, a
@@ -36,15 +57,34 @@ pub(crate) struct TransactionOptions {
 /// transaction object will panic.
 pub struct DefaultTransaction<'a> {
     pub inner: &'a dyn Queryable,
+    gauge: GaugeGuard,
 }
 
+#[cfg_attr(
+    not(any(
+        feature = "sqlite-native",
+        feature = "mssql-native",
+        feature = "postgresql-native",
+        feature = "mysql-native"
+    )),
+    allow(clippy::needless_lifetimes)
+)]
 impl<'a> DefaultTransaction<'a> {
+    #[cfg(any(
+        feature = "sqlite-native",
+        feature = "mssql-native",
+        feature = "postgresql-native",
+        feature = "mysql-native"
+    ))]
     pub(crate) async fn new(
         inner: &'a dyn Queryable,
         begin_stmt: &str,
         tx_opts: TransactionOptions,
     ) -> crate::Result<DefaultTransaction<'a>> {
-        let this = Self { inner };
+        let this = Self {
+            inner,
+            gauge: GaugeGuard::increment("prisma_client_queries_active"),
+        };
 
         if tx_opts.isolation_first {
             if let Some(isolation) = tx_opts.isolation_level {
@@ -62,16 +102,15 @@ impl<'a> DefaultTransaction<'a> {
 
         inner.server_reset_query(&this).await?;
 
-        gauge!("prisma_client_queries_active").increment(1.0);
         Ok(this)
     }
 }
 
 #[async_trait]
-impl<'a> Transaction for DefaultTransaction<'a> {
+impl Transaction for DefaultTransaction<'_> {
     /// Commit the changes to the database and consume the transaction.
     async fn commit(&self) -> crate::Result<()> {
-        gauge!("prisma_client_queries_active").decrement(1.0);
+        self.gauge.decrement();
         self.inner.raw_cmd("COMMIT").await?;
 
         Ok(())
@@ -79,7 +118,7 @@ impl<'a> Transaction for DefaultTransaction<'a> {
 
     /// Rolls back the changes to the database.
     async fn rollback(&self) -> crate::Result<()> {
-        gauge!("prisma_client_queries_active").decrement(1.0);
+        self.gauge.decrement();
         self.inner.raw_cmd("ROLLBACK").await?;
 
         Ok(())
@@ -91,7 +130,7 @@ impl<'a> Transaction for DefaultTransaction<'a> {
 }
 
 #[async_trait]
-impl<'a> Queryable for DefaultTransaction<'a> {
+impl Queryable for DefaultTransaction<'_> {
     async fn query(&self, q: Query<'_>) -> crate::Result<ResultSet> {
         self.inner.query(q).await
     }
@@ -190,14 +229,6 @@ impl FromStr for IsolationLevel {
                 let kind = ErrorKind::conversion(format!("Invalid isolation level `{s}`"));
                 Err(Error::builder(kind).build())
             }
-        }
-    }
-}
-impl TransactionOptions {
-    pub fn new(isolation_level: Option<IsolationLevel>, isolation_first: bool) -> Self {
-        Self {
-            isolation_level,
-            isolation_first,
         }
     }
 }

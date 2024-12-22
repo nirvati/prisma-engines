@@ -356,7 +356,7 @@ impl FilterVisitorExt for FilterVisitor {
         match filter.condition {
             #[cfg(feature = "postgresql")]
             ScalarCondition::Search(_, _) | ScalarCondition::NotSearch(_, _) => {
-                reachable_only_with_capability!(ConnectorCapability::FullTextSearch);
+                reachable_only_with_capability!(ConnectorCapability::NativeFullTextSearch);
                 let mut projections = match filter.condition.clone() {
                     ScalarCondition::Search(_, proj) => proj,
                     ScalarCondition::NotSearch(_, proj) => proj,
@@ -967,7 +967,7 @@ fn default_scalar_filter(
         }
         #[cfg(feature = "postgresql")]
         ScalarCondition::Search(value, _) => {
-            reachable_only_with_capability!(ConnectorCapability::FullTextSearch);
+            reachable_only_with_capability!(ConnectorCapability::NativeFullTextSearch);
             let query: String = value
                 .into_value()
                 .unwrap()
@@ -978,7 +978,7 @@ fn default_scalar_filter(
         }
         #[cfg(feature = "postgresql")]
         ScalarCondition::NotSearch(value, _) => {
-            reachable_only_with_capability!(ConnectorCapability::FullTextSearch);
+            reachable_only_with_capability!(ConnectorCapability::NativeFullTextSearch);
             let query: String = value
                 .into_value()
                 .unwrap()
@@ -1154,7 +1154,7 @@ fn insensitive_scalar_filter(
         }
         #[cfg(feature = "postgresql")]
         ScalarCondition::Search(value, _) => {
-            reachable_only_with_capability!(ConnectorCapability::FullTextSearch);
+            reachable_only_with_capability!(ConnectorCapability::NativeFullTextSearch);
             let query: String = value
                 .into_value()
                 .unwrap()
@@ -1165,7 +1165,7 @@ fn insensitive_scalar_filter(
         }
         #[cfg(feature = "postgresql")]
         ScalarCondition::NotSearch(value, _) => {
-            reachable_only_with_capability!(ConnectorCapability::FullTextSearch);
+            reachable_only_with_capability!(ConnectorCapability::NativeFullTextSearch);
             let query: String = value
                 .into_value()
                 .unwrap()
@@ -1293,6 +1293,8 @@ impl JsonFilterExt for (Expression<'static>, Expression<'static>) {
             }
             // array_contains (value)
             (ConditionValue::Value(value), JsonTargetType::Array) => {
+                reachable_only_with_capability!(ConnectorCapability::JsonArrayContains);
+
                 let contains = expr_json.clone().json_array_contains(convert_pv(field, value, ctx));
 
                 if reverse {
@@ -1317,6 +1319,8 @@ impl JsonFilterExt for (Expression<'static>, Expression<'static>) {
             }
             // array_contains (ref)
             (ConditionValue::FieldRef(field_ref), JsonTargetType::Array) => {
+                reachable_only_with_capability!(ConnectorCapability::JsonArrayContains);
+
                 let contains = expr_json.clone().json_array_contains(field_ref.aliased_col(alias, ctx));
 
                 if reverse {

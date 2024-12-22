@@ -42,7 +42,7 @@ pub struct NativeColumnType<'a> {
     pub length: Option<TypeDataLength>,
 }
 
-impl<'a> std::ops::Deref for NativeColumnType<'a> {
+impl std::ops::Deref for NativeColumnType<'_> {
     type Target = str;
 
     fn deref(&self) -> &Self::Target {
@@ -76,7 +76,7 @@ pub struct Value<'a> {
 
 impl<'a> Value<'a> {
     /// Returns the native column type of the value, if any, in the form
-    /// of an UPCASE string. ex: "VARCHAR, BYTEA, DATE, TIMEZ"  
+    /// of an UPCASE string. ex: "VARCHAR, BYTEA, DATE, TIMEZ"
     pub fn native_column_type_name(&'a self) -> Option<&'a str> {
         self.native_column_type.as_deref()
     }
@@ -313,21 +313,18 @@ impl<'a> Value<'a> {
     }
 
     /// `true` if the `Value` is a numeric value or can be converted to one.
-
     pub fn is_numeric(&self) -> bool {
         self.typed.is_numeric()
     }
 
     /// Returns a bigdecimal, if the value is a numeric, float or double value,
     /// otherwise `None`.
-
     pub fn into_numeric(self) -> Option<BigDecimal> {
         self.typed.into_numeric()
     }
 
     /// Returns a reference to a bigdecimal, if the value is a numeric.
     /// Otherwise `None`.
-
     pub fn as_numeric(&self) -> Option<&BigDecimal> {
         self.typed.as_numeric()
     }
@@ -491,7 +488,7 @@ impl<'a> Value<'a> {
     }
 }
 
-impl<'a> Display for Value<'a> {
+impl Display for Value<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.typed.fmt(f)
     }
@@ -561,7 +558,7 @@ pub enum ValueType<'a> {
 
 pub(crate) struct Params<'a>(pub(crate) &'a [Value<'a>]);
 
-impl<'a> Display for Params<'a> {
+impl Display for Params<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let len = self.0.len();
 
@@ -577,7 +574,7 @@ impl<'a> Display for Params<'a> {
     }
 }
 
-impl<'a> fmt::Display for ValueType<'a> {
+impl fmt::Display for ValueType<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let res = match self {
             ValueType::Int32(val) => val.map(|v| write!(f, "{v}")),
@@ -712,7 +709,6 @@ impl<'a> ValueType<'a> {
     }
 
     /// Creates a new decimal value.
-
     pub(crate) fn numeric(value: BigDecimal) -> Self {
         Self::Numeric(Some(value))
     }
@@ -980,14 +976,12 @@ impl<'a> ValueType<'a> {
     }
 
     /// `true` if the `Value` is a numeric value or can be converted to one.
-
     pub(crate) fn is_numeric(&self) -> bool {
         matches!(self, Self::Numeric(_) | Self::Float(_) | Self::Double(_))
     }
 
     /// Returns a bigdecimal, if the value is a numeric, float or double value,
     /// otherwise `None`.
-
     pub(crate) fn into_numeric(self) -> Option<BigDecimal> {
         match self {
             Self::Numeric(d) => d,
@@ -999,7 +993,6 @@ impl<'a> ValueType<'a> {
 
     /// Returns a reference to a bigdecimal, if the value is a numeric.
     /// Otherwise `None`.
-
     pub(crate) fn as_numeric(&self) -> Option<&BigDecimal> {
         match self {
             Self::Numeric(d) => d.as_ref(),

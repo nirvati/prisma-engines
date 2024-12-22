@@ -13,19 +13,19 @@ impl<'a> Text<Cow<'a, str>> {
     }
 }
 
-impl<'a> fmt::Display for Text<&'a str> {
+impl fmt::Display for Text<&str> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&psl::schema_ast::string_literal(self.0), f)
     }
 }
 
-impl<'a> fmt::Display for Text<Cow<'a, str>> {
+impl fmt::Display for Text<Cow<'_, str>> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         fmt::Display::fmt(&psl::schema_ast::string_literal(self.0.as_ref()), f)
     }
 }
 
-impl<'a> fmt::Display for Text<Base64Display<'a, 'static, base64::engine::GeneralPurpose>> {
+impl<'a> fmt::Display for Text<Base64Display<'a, '_, base64::engine::GeneralPurpose>> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str("\"")?;
         self.0.fmt(f)?;

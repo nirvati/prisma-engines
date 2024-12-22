@@ -2,7 +2,6 @@ use psl::{
     datamodel_connector::constraint_names::ConstraintNames,
     parser_database::{walkers, IndexType},
     schema_ast::ast,
-    PreviewFeature,
 };
 use sql_schema_describer as sql;
 
@@ -57,12 +56,7 @@ impl<'a> IndexPair<'a> {
 
     /// The type of the index.
     pub(crate) fn index_type(self) -> sql::IndexType {
-        let preview_features = self.context.config.preview_features();
-
         match self.next.map(|next| next.index_type()) {
-            Some(sql::IndexType::Fulltext) if !preview_features.contains(PreviewFeature::FullTextIndex) => {
-                sql::IndexType::Normal
-            }
             Some(typ) => typ,
             None => match self.previous.map(|prev| prev.index_type()) {
                 Some(IndexType::Unique) => sql::IndexType::Unique,

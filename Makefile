@@ -67,6 +67,10 @@ build-qe-wasm-gz: build-qe-wasm
         gzip -knc $$provider/query_engine_bg.wasm > $$provider.gz; \
     done;
 
+integrate-qe-wasm:
+	cd query-engine/query-engine-wasm && \
+	./build.sh $(QE_WASM_VERSION) ../prisma/packages/client/node_modules/@prisma/query-engine-wasm
+
 build-schema-wasm:
 	@printf '%s\n' "🛠️  Building the Rust crate"
 	cargo build --profile $(PROFILE) --target=wasm32-unknown-unknown -p prisma-schema-build
@@ -79,7 +83,9 @@ build-schema-wasm:
 
 # Emulate pedantic CI compilation.
 pedantic:
-	RUSTFLAGS="-D warnings" cargo fmt -- --check && RUSTFLAGS="-D warnings" cargo clippy --all-targets
+	RUSTFLAGS="-D warnings" cargo fmt -- --check
+	RUSTFLAGS="-D warnings" cargo clippy --all-features --all-targets
+	RUSTFLAGS="-D warnings" cargo clippy --all-features --all-targets -p query-engine-wasm -p prisma-schema-build --target wasm32-unknown-unknown
 
 release:
 	cargo build --release
@@ -355,6 +361,9 @@ start-mongodb_5:
 dev-mongodb_5: start-mongodb_5
 	cp $(CONFIG_PATH)/mongodb5 $(CONFIG_FILE)
 
+dev-mongodb_5_single: start-mongodb5-single
+	cp $(CONFIG_PATH)/mongodb5 $(CONFIG_FILE)
+
 dev-mongodb_4_2: start-mongodb_4_2
 	cp $(CONFIG_PATH)/mongodb42 $(CONFIG_FILE)
 
@@ -384,7 +393,7 @@ test-driver-adapter-planetscale-wasm: test-planetscale-wasm
 # Local dev commands #
 ######################
 
-measure-qe-wasm: build-qe-wasm-gz	
+measure-qe-wasm: build-qe-wasm-gz
 	@cd query-engine/query-engine-wasm/pkg; \
 	for provider in postgresql mysql sqlite; do \
 		echo "$${provider}_size=$$(cat $$provider/query_engine_bg.wasm | wc -c | tr -d ' ')" >> $(ENGINE_SIZE_OUTPUT); \
@@ -396,7 +405,7 @@ build-driver-adapters-kit: build-driver-adapters
 
 build-driver-adapters: ensure-prisma-present
 	@echo "Building driver adapters..."
-	@cd ../prisma && pnpm --filter "*adapter*" i
+	@cd ../prisma && pnpm i
 	@echo "Driver adapters build completed.";
 
 ensure-prisma-present:

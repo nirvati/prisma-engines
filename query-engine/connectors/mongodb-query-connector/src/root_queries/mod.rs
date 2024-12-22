@@ -13,7 +13,7 @@ use crate::{
 use bson::Bson;
 use bson::Document;
 use futures::Future;
-use query_engine_metrics::{
+use prisma_metrics::{
     counter, histogram, PRISMA_DATASOURCE_QUERIES_DURATION_HISTOGRAM_MS, PRISMA_DATASOURCE_QUERIES_TOTAL,
 };
 use query_structure::*;
@@ -71,7 +71,7 @@ where
         "prisma:engine:db_query",
         user_facing = true,
         "db.system" = DB_SYSTEM_NAME,
-        "db.statement" = %Arc::clone(&query_string),
+        "db.query.text" = %Arc::clone(&query_string),
         "db.operation.name" = builder.query_type(),
         "otel.kind" = "client"
     );

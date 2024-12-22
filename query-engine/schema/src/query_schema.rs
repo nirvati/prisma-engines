@@ -105,7 +105,11 @@ impl QuerySchema {
     }
 
     pub(crate) fn can_full_text_search(&self) -> bool {
-        self.has_feature(PreviewFeature::FullTextSearch) && self.has_capability(ConnectorCapability::FullTextSearch)
+        self.connector
+            .native_full_text_search_preview_feature()
+            .map(|feature| self.has_feature(feature))
+            .unwrap_or(true)
+            && self.has_capability(ConnectorCapability::NativeFullTextSearch)
     }
 
     /// Returns whether the loaded connector supports the join strategy.
@@ -212,6 +216,14 @@ impl QuerySchema {
         self.connector
             .capabilities()
             .contains(ConnectorCapability::NativeUpsert)
+    }
+
+    pub fn is_sql(&self) -> bool {
+        self.connector.is_sql()
+    }
+
+    pub fn is_mongo(&self) -> bool {
+        self.connector.is_mongo()
     }
 }
 

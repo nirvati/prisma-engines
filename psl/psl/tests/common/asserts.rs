@@ -83,8 +83,11 @@ pub(crate) trait DefaultValueAssert {
     fn assert_constant(&self, val: &str) -> &Self;
     fn assert_bytes(&self, val: &[u8]) -> &Self;
     fn assert_now(&self) -> &Self;
+    fn assert_ulid(&self) -> &Self;
     fn assert_cuid(&self) -> &Self;
+    fn assert_cuid_version(&self, version: u8) -> &Self;
     fn assert_uuid(&self) -> &Self;
+    fn assert_uuid_version(&self, version: u8) -> &Self;
     fn assert_dbgenerated(&self, val: &str) -> &Self;
     fn assert_mapped_name(&self, val: &str) -> &Self;
 }
@@ -150,7 +153,7 @@ impl<'a> DatamodelAssert<'a> for psl::ValidatedSchema {
     }
 }
 
-impl<'a> RelationFieldAssert for walkers::RelationFieldWalker<'a> {
+impl RelationFieldAssert for walkers::RelationFieldWalker<'_> {
     #[track_caller]
     fn assert_relation_to(&self, model_id: ModelId) -> &Self {
         assert!(self.references_model(model_id));
@@ -262,7 +265,7 @@ impl<'a> ModelAssert<'a> for walkers::ModelWalker<'a> {
     }
 }
 
-impl<'a> ScalarFieldAssert for walkers::ScalarFieldWalker<'a> {
+impl ScalarFieldAssert for walkers::ScalarFieldWalker<'_> {
     #[track_caller]
     fn assert_ignored(&self, ignored: bool) -> &Self {
         assert_eq!(self.is_ignored(), ignored);
@@ -373,7 +376,7 @@ impl<'a> ScalarFieldAssert for walkers::ScalarFieldWalker<'a> {
     }
 }
 
-impl<'a> DefaultValueAssert for walkers::DefaultValueWalker<'a> {
+impl DefaultValueAssert for walkers::DefaultValueWalker<'_> {
     #[track_caller]
     fn assert_autoincrement(&self) -> &Self {
         self.value().assert_autoincrement();
@@ -429,14 +432,32 @@ impl<'a> DefaultValueAssert for walkers::DefaultValueWalker<'a> {
     }
 
     #[track_caller]
+    fn assert_ulid(&self) -> &Self {
+        self.value().assert_ulid();
+        self
+    }
+
+    #[track_caller]
     fn assert_cuid(&self) -> &Self {
         self.value().assert_cuid();
         self
     }
 
     #[track_caller]
+    fn assert_cuid_version(&self, version: u8) -> &Self {
+        self.value().assert_cuid_version(version);
+        self
+    }
+
+    #[track_caller]
     fn assert_uuid(&self) -> &Self {
         self.value().assert_uuid();
+        self
+    }
+
+    #[track_caller]
+    fn assert_uuid_version(&self, version: u8) -> &Self {
+        self.value().assert_uuid_version(version);
         self
     }
 
@@ -453,7 +474,7 @@ impl<'a> DefaultValueAssert for walkers::DefaultValueWalker<'a> {
     }
 }
 
-impl<'a> IndexAssert for walkers::IndexWalker<'a> {
+impl IndexAssert for walkers::IndexWalker<'_> {
     #[track_caller]
     fn assert_field(&self, name: &str) -> walkers::ScalarFieldAttributeWalker<'_> {
         self.scalar_field_attributes()
@@ -491,7 +512,7 @@ impl<'a> IndexAssert for walkers::IndexWalker<'a> {
     }
 }
 
-impl<'a> IndexFieldAssert for walkers::ScalarFieldAttributeWalker<'a> {
+impl IndexFieldAssert for walkers::ScalarFieldAttributeWalker<'_> {
     #[track_caller]
     fn assert_descending(&self) -> &Self {
         assert_eq!(Some(SortOrder::Desc), self.sort_order());
@@ -526,7 +547,7 @@ impl<'a> TypeAssert<'a> for walkers::CompositeTypeWalker<'a> {
     }
 }
 
-impl<'a> CompositeFieldAssert for walkers::CompositeTypeFieldWalker<'a> {
+impl CompositeFieldAssert for walkers::CompositeTypeFieldWalker<'_> {
     #[track_caller]
     fn assert_scalar_type(&self, t: ScalarType) -> &Self {
         assert_eq!(Some(t), self.scalar_type());
@@ -622,10 +643,32 @@ impl DefaultValueAssert for ast::Expression {
     }
 
     #[track_caller]
+    fn assert_ulid(&self) -> &Self {
+        assert!(matches!(self, ast::Expression::Function(name, _, _) if name == "ulid"));
+
+        self
+    }
+
+    #[track_caller]
     fn assert_cuid(&self) -> &Self {
-        assert!(
-            matches!(self, ast::Expression::Function(name, args, _) if name == "cuid" && args.arguments.is_empty())
-        );
+        assert!(matches!(self, ast::Expression::Function(name, _, _) if name == "cuid"));
+
+        self
+    }
+
+    #[track_caller]
+    fn assert_cuid_version(&self, version: u8) -> &Self {
+        self.assert_cuid();
+
+        if let ast::Expression::Function(_, args, _) = self {
+            if let ast::Expression::NumericValue(actual, _) = &args.arguments[0].value {
+                assert_eq!(actual, &format!("{version}"));
+            } else {
+                panic!("Expected a numeric value for the `cuid()` version.");
+            }
+        } else {
+            panic!("Expected `cuid()` to be a function, got {}", &self);
+        }
 
         self
     }
@@ -633,6 +676,23 @@ impl DefaultValueAssert for ast::Expression {
     #[track_caller]
     fn assert_uuid(&self) -> &Self {
         assert!(matches!(self, ast::Expression::Function(name, _, _) if name == "uuid"));
+
+        self
+    }
+
+    #[track_caller]
+    fn assert_uuid_version(&self, version: u8) -> &Self {
+        self.assert_uuid();
+
+        if let ast::Expression::Function(_, args, _) = self {
+            if let ast::Expression::NumericValue(actual, _) = &args.arguments[0].value {
+                assert_eq!(actual, &version.to_string());
+            } else {
+                panic!("Expected a numeric value for the `uuid()` version.");
+            }
+        } else {
+            panic!("Expected `cuid()` to be a function, got {}", &self);
+        }
 
         self
     }
@@ -656,7 +716,7 @@ impl DefaultValueAssert for ast::Expression {
     }
 }
 
-impl<'a> IndexAssert for walkers::PrimaryKeyWalker<'a> {
+impl IndexAssert for walkers::PrimaryKeyWalker<'_> {
     #[track_caller]
     fn assert_field(&self, name: &str) -> walkers::ScalarFieldAttributeWalker<'_> {
         self.scalar_field_attributes()

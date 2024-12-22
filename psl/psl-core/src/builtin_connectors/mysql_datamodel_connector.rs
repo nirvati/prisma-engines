@@ -38,17 +38,17 @@ pub const CAPABILITIES: ConnectorCapabilities = enumflags2::make_bitflags!(Conne
     JsonFiltering |
     JsonFilteringJsonPath |
     JsonFilteringAlphanumeric |
+    JsonArrayContains |
     CreateManyWriteableAutoIncId |
     AutoIncrement |
     CompoundIds |
     AnyId |
-    SqlQueryRaw |
     NamedForeignKeys |
     AdvancedJsonNullability |
     IndexColumnLengthPrefixing |
     FullTextIndex |
-    FullTextSearch |
-    FullTextSearchWithIndex |
+    NativeFullTextSearch |
+    NativeFullTextSearchWithIndex |
     MultipleFullTextAttributesPerModel |
     ImplicitManyToManyRelation |
     DecimalType |

@@ -30,6 +30,7 @@ impl FromSource for PostgreSql {
         source: &psl::Datasource,
         url: &str,
         features: psl::PreviewFeatures,
+        tracing_enabled: bool,
     ) -> connector_interface::Result<Self> {
         let database_str = url;
 
@@ -41,7 +42,7 @@ impl FromSource for PostgreSql {
             })
         })?;
 
-        let mut builder = Quaint::builder(url)
+        let mut builder = Quaint::builder_with_tracing(url, tracing_enabled)
             .map_err(SqlError::from)
             .map_err(|sql_error| sql_error.into_connector_error(&err_conn_info))?;
 

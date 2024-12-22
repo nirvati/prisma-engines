@@ -2,19 +2,20 @@ mod json_adapter;
 
 pub use json_adapter::*;
 use serde::{Deserialize, Serialize};
+use telemetry::TraceParent;
 
 use crate::{
     executor_process_request, ConnectorTag, ConnectorVersion, QueryResult, TestError, TestLogCapture, TestResult,
     ENGINE_PROTOCOL,
 };
 use colored::Colorize;
+use prisma_metrics::MetricRegistry;
 use query_core::{
     protocol::EngineProtocol,
     relation_load_strategy,
     schema::{self, QuerySchemaRef},
     QueryExecutor, TransactionOptions, TxId,
 };
-use query_engine_metrics::MetricRegistry;
 use request_handlers::{
     BatchTransactionOption, ConnectorKind, GraphqlBody, JsonBatchQuery, JsonBody, JsonSingleQuery, MultiQuery,
     RequestBody, RequestHandler,
@@ -264,6 +265,7 @@ impl Runner {
                         datasource,
                     },
                     schema.configuration.preview_features(),
+                    true,
                 )
                 .await?;
                 let connector = query_executor.primary_connector();
@@ -306,7 +308,28 @@ impl Runner {
         })
     }
 
-    pub async fn query<T>(&self, query: T) -> TestResult<QueryResult>
+    pub async fn query(&self, query: impl Into<String>) -> TestResult<QueryResult> {
+        self.query_with_params(self.current_tx_id.as_ref(), None, query).await
+    }
+
+    pub async fn query_in_tx(&self, tx_id: &TxId, query: impl Into<String>) -> TestResult<QueryResult> {
+        self.query_with_params(Some(tx_id), None, query).await
+    }
+
+    pub async fn query_with_traceparent(
+        &self,
+        traceparent: TraceParent,
+        query: impl Into<String>,
+    ) -> TestResult<QueryResult> {
+        self.query_with_params(None, Some(traceparent), query).await
+    }
+
+    async fn query_with_params<T>(
+        &self,
+        tx_id: Option<&TxId>,
+        traceparent: Option<TraceParent>,
+        query: T,
+    ) -> TestResult<QueryResult>
     where
         T: Into<String>,
     {
@@ -316,7 +339,7 @@ impl Runner {
             RunnerExecutor::Builtin(e) => e,
             RunnerExecutor::External(external) => match JsonRequest::from_graphql(&query, self.query_schema()) {
                 Ok(json_query) => {
-                    let mut response = external.query(json_query, self.current_tx_id.as_ref()).await?;
+                    let mut response = external.query(json_query, tx_id).await?;
                     response.detag();
                     return Ok(response);
                 }
@@ -353,7 +376,7 @@ impl Runner {
             }
         };
 
-        let response = handler.handle(request_body, self.current_tx_id.clone(), None).await;
+        let response = handler.handle(request_body, tx_id.cloned(), traceparent).await;
 
         let result: QueryResult = match self.protocol {
             EngineProtocol::Json => JsonResponse::from_graphql(response).into(),
